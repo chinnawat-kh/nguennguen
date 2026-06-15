@@ -1,50 +1,51 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, type JSX } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import { TrendingUp, TrendingDown, Wallet } from 'lucide-react'
+import Modal from './Modal'
 import { useL } from '../i18n'
+import { type Transaction, type FilterMode } from '../types'
+import { filterByMode, getCurrentMonth } from '../dateUtils'
 
-export default function Dashboard({ transactions, budget, setBudget }: any) {
+interface DashboardProps {
+  transactions: Transaction[]
+  budget: number
+  setBudget: (amount: number) => void
+}
+
+interface ChartEntry {
+  name: string
+  value: number
+  color: string
+}
+
+export default function Dashboard({
+  transactions,
+  budget,
+  setBudget
+}: DashboardProps): JSX.Element {
   const { t } = useL()
-  const [filterMode, setFilterMode] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly')
+  const [filterMode, setFilterMode] = useState<FilterMode>('monthly')
   const [showBudgetModal, setShowBudgetModal] = useState(false)
   const [newBudget, setNewBudget] = useState(budget.toString())
 
-  const today = new Date()
-  const currentDay = today.toISOString().substring(0, 10)
-  const currentMonth = today.toISOString().substring(0, 7)
-  const currentYear = today.toISOString().substring(0, 4)
+  const currentMonth = getCurrentMonth()
 
-  const dayOfWeek = today.getDay()
-  const monday = new Date(today)
-  monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1))
-  const weekStart = monday.toISOString().substring(0, 10)
-  const sunday = new Date(monday)
-  sunday.setDate(monday.getDate() + 6)
-  const weekEnd = sunday.toISOString().substring(0, 10)
-
-  const filteredTxs = useMemo(() => {
-    if (filterMode === 'daily')
-      return transactions.filter((t: any) => t.date.startsWith(currentDay))
-    if (filterMode === 'weekly')
-      return transactions.filter((t: any) => t.date >= weekStart && t.date <= weekEnd)
-    if (filterMode === 'monthly')
-      return transactions.filter((t: any) => t.date.startsWith(currentMonth))
-    if (filterMode === 'yearly')
-      return transactions.filter((t: any) => t.date.startsWith(currentYear))
-    return transactions
-  }, [transactions, filterMode, currentDay, weekStart, weekEnd, currentMonth, currentYear])
+  const filteredTxs = useMemo(
+    () => filterByMode(transactions, filterMode),
+    [transactions, filterMode]
+  )
 
   const totalIncome = filteredTxs
-    .filter((t: any) => t.type === 'income')
-    .reduce((sum: number, t: any) => sum + t.amount, 0)
+    .filter((t) => t.type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0)
   const totalExpense = filteredTxs
-    .filter((t: any) => t.type === 'expense')
-    .reduce((sum: number, t: any) => sum + t.amount, 0)
+    .filter((t) => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0)
   const balance = totalIncome - totalExpense
 
   const expensesByCategory = filteredTxs
-    .filter((t: any) => t.type === 'expense')
-    .reduce((acc: any, t: any) => {
+    .filter((t) => t.type === 'expense')
+    .reduce<Record<string, ChartEntry>>((acc, t) => {
       const cat = t.category_name || 'Other'
       if (!acc[cat]) acc[cat] = { name: cat, value: 0, color: t.category_color || '#8884d8' }
       acc[cat].value += t.amount
@@ -53,7 +54,7 @@ export default function Dashboard({ transactions, budget, setBudget }: any) {
 
   const chartData = Object.values(expensesByCategory)
 
-  const handleBudgetSubmit = async (e: React.FormEvent) => {
+  const handleBudgetSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
     const amount = Number(newBudget)
     if (!isNaN(amount)) {
@@ -63,7 +64,6 @@ export default function Dashboard({ transactions, budget, setBudget }: any) {
     }
   }
 
-  // Budget is always based on monthly logic, but if we are viewing other periods, we still show the monthly budget
   const isOverBudget = budget > 0 && totalExpense > budget
   const budgetPercent = budget > 0 ? Math.min(100, (totalExpense / budget) * 100) : 0
 
@@ -73,7 +73,7 @@ export default function Dashboard({ transactions, budget, setBudget }: any) {
         <h2 className="text-2xl font-bold">{t('dashboard.title')}</h2>
         <select
           value={filterMode}
-          onChange={(e) => setFilterMode(e.target.value as any)}
+          onChange={(e) => setFilterMode(e.target.value as FilterMode)}
           className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-400 dark:focus:ring-teal-500 cursor-pointer"
         >
           <option value="daily">{t('dashboard.today')}</option>
@@ -141,7 +141,7 @@ export default function Dashboard({ transactions, budget, setBudget }: any) {
                     paddingAngle={5}
                     dataKey="value"
                   >
-                    {chartData.map((entry: any, index: number) => (
+                    {chartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -218,36 +218,34 @@ export default function Dashboard({ transactions, budget, setBudget }: any) {
       </div>
 
       {showBudgetModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-sm w-full p-6 shadow-xl border border-gray-100 dark:border-gray-700">
-            <h3 className="text-xl font-bold mb-4">{t('dashboard.setBudgetModal')}</h3>
-            <form onSubmit={handleBudgetSubmit} className="space-y-4">
-              <input
-                type="number"
-                value={newBudget}
-                onChange={(e) => setNewBudget(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none"
-                placeholder={t('common.placeholder')}
-                required
-              />
-              <div className="flex justify-end space-x-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowBudgetModal(false)}
-                  className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                >
-                  {t('common.cancel')}
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors"
-                >
-                  {t('common.save')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <Modal size="sm">
+          <h3 className="text-xl font-bold mb-4">{t('dashboard.setBudgetModal')}</h3>
+          <form onSubmit={handleBudgetSubmit} className="space-y-4">
+            <input
+              type="number"
+              value={newBudget}
+              onChange={(e) => setNewBudget(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none"
+              placeholder={t('common.placeholder')}
+              required
+            />
+            <div className="flex justify-end space-x-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowBudgetModal(false)}
+                className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors"
+              >
+                {t('common.save')}
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   )

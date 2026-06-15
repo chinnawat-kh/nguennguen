@@ -1,9 +1,9 @@
-import { useState, useEffect, type ReactNode } from 'react'
+import { useState, useEffect, type ReactNode, type JSX } from 'react'
 import { LanguageContext, createT, type Lang } from './index'
 
 const STORAGE_KEY = 'nguennguen-lang'
 
-export default function LanguageProvider({ children }: { children: ReactNode }) {
+export default function LanguageProvider({ children }: { children: ReactNode }): JSX.Element {
   const [lang, setLangState] = useState<Lang>(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem(STORAGE_KEY)
@@ -12,7 +12,7 @@ export default function LanguageProvider({ children }: { children: ReactNode }) 
     return 'en'
   })
 
-  const setLang = (l: Lang) => {
+  const setLang = (l: Lang): void => {
     localStorage.setItem(STORAGE_KEY, l)
     setLangState(l)
   }

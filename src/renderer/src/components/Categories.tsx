@@ -1,48 +1,57 @@
-import { useState } from 'react'
+import { useState, type JSX } from 'react'
 import { Plus, Trash2, Edit2, Check, X } from 'lucide-react'
+import Modal from './Modal'
 import { useL } from '../i18n'
+import { type Category } from '../types'
 
-export default function Categories({ categories, onRefresh }: any) {
+interface CategoriesProps {
+  categories: Category[]
+  onRefresh: () => void
+}
+
+const defaultColor = '#3b82f6'
+const pastelColors = [
+  '#f87171',
+  '#fb923c',
+  '#fbbf24',
+  '#34d399',
+  '#38bdf8',
+  '#818cf8',
+  '#c084fc',
+  '#f472b6'
+]
+
+export default function Categories({ categories, onRefresh }: CategoriesProps): JSX.Element {
   const { t } = useL()
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
 
   const [formData, setFormData] = useState({
     name: '',
-    type: 'expense',
+    type: 'expense' as 'income' | 'expense',
     icon: 'Tag',
-    color: '#3b82f6'
+    color: defaultColor
   })
 
-  const [editData, setEditData] = useState({
+  const [editData, setEditData] = useState<Category>({
     id: 0,
     name: '',
     type: 'expense',
     icon: 'Tag',
-    color: '#3b82f6'
+    color: defaultColor
   })
 
-  const pastelColors = [
-    '#f87171',
-    '#fb923c',
-    '#fbbf24',
-    '#34d399',
-    '#38bdf8',
-    '#818cf8',
-    '#c084fc',
-    '#f472b6'
-  ]
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
     if (!formData.name) return
     await window.api.addCategory(formData)
     setShowAddModal(false)
-    setFormData({ name: '', type: 'expense', icon: 'Tag', color: '#3b82f6' })
+    setFormData({ name: '', type: 'expense', icon: 'Tag', color: defaultColor })
     onRefresh()
   }
 
-  const handleUpdate = async (e: React.FormEvent) => {
+  const handleUpdate = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
     if (!editData.name) return
     await window.api.updateCategory(editData)
@@ -50,11 +59,10 @@ export default function Categories({ categories, onRefresh }: any) {
     onRefresh()
   }
 
-  const handleDelete = async (id: number) => {
-    if (confirm(t('categories.confirmDelete'))) {
-      await window.api.deleteCategory(id)
-      onRefresh()
-    }
+  const handleDelete = async (id: number): Promise<void> => {
+    await window.api.deleteCategory(id)
+    setConfirmDeleteId(null)
+    onRefresh()
   }
 
   return (
@@ -112,7 +120,7 @@ export default function Categories({ categories, onRefresh }: any) {
                   </td>
                 </tr>
               ) : (
-                categories.map((c: any) => (
+                categories.map((c) => (
                   <tr
                     key={c.id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
@@ -135,7 +143,12 @@ export default function Categories({ categories, onRefresh }: any) {
                           />
                           <select
                             value={editData.type}
-                            onChange={(e) => setEditData({ ...editData, type: e.target.value })}
+                            onChange={(e) =>
+                              setEditData({
+                                ...editData,
+                                type: e.target.value as 'income' | 'expense'
+                              })
+                            }
                             className="px-3 py-1 border rounded bg-white dark:bg-gray-700"
                           >
                             <option value="expense">{t('common.expense')}</option>
@@ -169,22 +182,42 @@ export default function Categories({ categories, onRefresh }: any) {
                             <span className="text-rose-500">{t('common.expense')}</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                          <button
-                            onClick={() => {
-                              setEditingId(c.id)
-                              setEditData(c)
-                            }}
-                            className="text-teal-500 hover:text-teal-700"
-                          >
-                            <Edit2 size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(c.id)}
-                            className="text-rose-500 hover:text-rose-700"
-                          >
-                            <Trash2 size={18} />
-                          </button>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          {confirmDeleteId === c.id ? (
+                            <span className="inline-flex items-center gap-1 text-xs">
+                              <button
+                                onClick={() => handleDelete(c.id)}
+                                className="text-green-600 hover:text-green-700 font-semibold"
+                              >
+                                {t('common.confirm')}
+                              </button>
+                              <span className="text-gray-300 dark:text-gray-600">/</span>
+                              <button
+                                onClick={() => setConfirmDeleteId(null)}
+                                className="text-gray-500 hover:text-gray-700"
+                              >
+                                {t('common.cancel')}
+                              </button>
+                            </span>
+                          ) : (
+                            <span className="space-x-2">
+                              <button
+                                onClick={() => {
+                                  setEditingId(c.id)
+                                  setEditData(c)
+                                }}
+                                className="text-teal-500 hover:text-teal-700"
+                              >
+                                <Edit2 size={18} />
+                              </button>
+                              <button
+                                onClick={() => setConfirmDeleteId(c.id)}
+                                className="text-rose-500 hover:text-rose-700"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </span>
+                          )}
                         </td>
                       </>
                     )}
@@ -197,94 +230,90 @@ export default function Categories({ categories, onRefresh }: any) {
       </div>
 
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6 shadow-xl border border-gray-100 dark:border-gray-700">
-            <h3 className="text-xl font-bold mb-4">{t('categories.addModalTitle')}</h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  {t('categories.typeLabel')}
+        <Modal>
+          <h3 className="text-xl font-bold mb-4">{t('categories.addModalTitle')}</h3>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">{t('categories.typeLabel')}</label>
+              <div className="flex space-x-4">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    name="catType"
+                    value="expense"
+                    checked={formData.type === 'expense'}
+                    onChange={(e) =>
+                      setFormData({ ...formData, type: e.target.value as 'income' | 'expense' })
+                    }
+                    className="text-rose-500"
+                  />
+                  <span>{t('categories.expense')}</span>
                 </label>
-                <div className="flex space-x-4">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="catType"
-                      value="expense"
-                      checked={formData.type === 'expense'}
-                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                      className="text-rose-500"
-                    />
-                    <span>{t('categories.expense')}</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="catType"
-                      value="income"
-                      checked={formData.type === 'income'}
-                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                      className="text-green-500"
-                    />
-                    <span>{t('categories.income')}</span>
-                  </label>
-                </div>
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    name="catType"
+                    value="income"
+                    checked={formData.type === 'income'}
+                    onChange={(e) =>
+                      setFormData({ ...formData, type: e.target.value as 'income' | 'expense' })
+                    }
+                    className="text-green-500"
+                  />
+                  <span>{t('categories.income')}</span>
+                </label>
               </div>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  {t('categories.nameLabel')}
-                </label>
+            <div>
+              <label className="block text-sm font-medium mb-1">{t('categories.nameLabel')}</label>
+              <input
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">{t('categories.colorLabel')}</label>
+              <div className="flex flex-wrap gap-2">
+                {pastelColors.map((color) => (
+                  <button
+                    type="button"
+                    key={color}
+                    onClick={() => setFormData({ ...formData, color })}
+                    className={`w-8 h-8 rounded-full border-2 ${formData.color === color ? 'border-gray-900 dark:border-white' : 'border-transparent'}`}
+                    style={{ backgroundColor: color }}
+                  ></button>
+                ))}
                 <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none"
+                  type="color"
+                  value={formData.color}
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  className="w-8 h-8 rounded cursor-pointer"
                 />
               </div>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  {t('categories.colorLabel')}
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {pastelColors.map((color) => (
-                    <button
-                      type="button"
-                      key={color}
-                      onClick={() => setFormData({ ...formData, color })}
-                      className={`w-8 h-8 rounded-full border-2 ${formData.color === color ? 'border-gray-900 dark:border-white' : 'border-transparent'}`}
-                      style={{ backgroundColor: color }}
-                    ></button>
-                  ))}
-                  <input
-                    type="color"
-                    value={formData.color}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    className="w-8 h-8 rounded cursor-pointer"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                >
-                  {t('common.cancel')}
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors"
-                >
-                  {t('common.save')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            <div className="flex justify-end space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowAddModal(false)}
+                className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors"
+              >
+                {t('common.save')}
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   )

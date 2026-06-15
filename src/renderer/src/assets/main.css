@@ -9,27 +9,14 @@
     'Noto Color Emoji';
 
   --animate-fade-in: fade-in 0.4s ease-out;
-  --animate-slide-up: slide-up 0.4s ease-out;
   --animate-scale-in: scale-in 0.25s ease-out;
   --animate-gradient: gradient-shift 4s ease infinite;
-  --animate-float: float 3s ease-in-out infinite;
 }
 
 @keyframes fade-in {
   from {
     opacity: 0;
     transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -58,16 +45,6 @@
   }
 }
 
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-}
-
 :root {
   --color-bg: #fdfbf7;
   --color-text: #4a4a4a;
@@ -87,6 +64,13 @@ body {
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
+}
+
+.titlebar {
+  -webkit-app-region: drag;
+}
+.titlebar-btn {
+  -webkit-app-region: no-drag;
 }
 
 ::-webkit-scrollbar {

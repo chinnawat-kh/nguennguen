@@ -15,7 +15,9 @@ function resolve(obj: Record<string, unknown>, path: string): unknown {
   }, obj as unknown)
 }
 
-export function createT(lang: Lang) {
+export function createT(
+  lang: Lang
+): (key: string, params?: Record<string, string | number>) => string {
   const dict = locales[lang]
   return (key: string, params?: Record<string, string | number>): string => {
     const value = resolve(dict, key)
@@ -29,7 +31,7 @@ export function createT(lang: Lang) {
   }
 }
 
-export type T = ReturnType<typeof createT>
+export type T = (key: string, params?: Record<string, string | number>) => string
 
 export interface LanguageContextValue {
   lang: Lang
@@ -43,6 +45,6 @@ export const LanguageContext = createContext<LanguageContextValue>({
   setLang: () => {}
 })
 
-export function useL() {
+export function useL(): LanguageContextValue {
   return useContext(LanguageContext)
 }

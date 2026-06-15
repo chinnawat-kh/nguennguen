@@ -14,15 +14,35 @@ import {
   updateCategory,
   deleteCategory,
   getBudget,
-  setBudget
+  setBudget,
+  getAllData,
+  replaceAllData
 } from './database'
+import {
+  signIn,
+  clearTokens,
+  pushData,
+  pullData,
+  getSyncStatus,
+  getClientId,
+  setClientId
+} from './sync'
+
+let mainWindow: BrowserWindow | null = null
+
+function sendUpdateEvent(type: string, data?: unknown): void {
+  const w = mainWindow
+  if (w && !w.isDestroyed()) {
+    w.webContents.send('update-event', { type, data })
+  }
+}
 function createWindow(): void {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  const win = new BrowserWindow({
     width: 900,
     height: 670,
     minWidth: 560,
     minHeight: 500,
+    frame: false,
     show: false,
     autoHideMenuBar: true,
     icon,
@@ -31,22 +51,28 @@ function createWindow(): void {
       sandbox: false
     }
   })
+  mainWindow = win
 
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
+  win.on('ready-to-show', () => {
+    win.show()
   })
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
+  win.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
 
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
+  win.on('maximize', () => {
+    win.webContents.send('window-state-changed', true)
+  })
+  win.on('unmaximize', () => {
+    win.webContents.send('window-state-changed', false)
+  })
+
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    win.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    win.loadFile(join(__dirname, '../renderer/index.html'))
   }
 }
 
@@ -65,6 +91,13 @@ app.whenReady().then(() => {
   })
 
   // Auto Updater
+  autoUpdater.autoDownload = false
+  autoUpdater.on('checking-for-update', () => sendUpdateEvent('checking'))
+  autoUpdater.on('update-available', (info) => sendUpdateEvent('available', info))
+  autoUpdater.on('update-not-available', (info) => sendUpdateEvent('not-available', info))
+  autoUpdater.on('download-progress', (progress) => sendUpdateEvent('progress', progress))
+  autoUpdater.on('update-downloaded', (info) => sendUpdateEvent('downloaded', info))
+  autoUpdater.on('error', (err) => sendUpdateEvent('error', err.message || 'Unknown error'))
   autoUpdater.checkForUpdatesAndNotify()
 
   // IPC handlers
@@ -78,6 +111,81 @@ app.whenReady().then(() => {
   ipcMain.handle('delete-category', (_, id) => deleteCategory(id))
   ipcMain.handle('get-budget', (_, month) => getBudget(month))
   ipcMain.handle('set-budget', (_, data) => setBudget(data))
+
+  ipcMain.handle('get-app-version', () => app.getVersion())
+  ipcMain.handle('check-for-updates', () => {
+    autoUpdater.checkForUpdates()
+  })
+
+  // Sync handlers
+  ipcMain.handle('sync-get-client-id', () => getClientId())
+  ipcMain.handle('sync-set-client-id', (_, id: string) => {
+    setClientId(id)
+  })
+  ipcMain.handle('sync-sign-in', async () => {
+    try {
+      return await signIn()
+    } catch (e) {
+      return { error: (e as Error).message }
+    }
+  })
+  ipcMain.handle('sync-sign-out', () => {
+    clearTokens()
+  })
+  ipcMain.handle('sync-status', async () => {
+    return getSyncStatus()
+  })
+  ipcMain.handle('sync-now', async () => {
+    try {
+      const localData = getAllData()
+      const result = await pushData(localData)
+      const remoteData = await pullData()
+      if (remoteData && remoteData.transactions) {
+        replaceAllData(remoteData)
+      }
+      return { success: true, syncedAt: result.syncedAt }
+    } catch (e) {
+      return { error: (e as Error).message }
+    }
+  })
+  ipcMain.handle('sync-push', async () => {
+    try {
+      const localData = getAllData()
+      const result = await pushData(localData)
+      return { success: true, syncedAt: result.syncedAt }
+    } catch (e) {
+      return { error: (e as Error).message }
+    }
+  })
+  ipcMain.handle('sync-pull', async () => {
+    try {
+      const remoteData = await pullData()
+      if (remoteData && remoteData.transactions) {
+        replaceAllData(remoteData)
+        return { success: true, syncedAt: remoteData.syncedAt }
+      }
+      return { success: true, syncedAt: null }
+    } catch (e) {
+      return { error: (e as Error).message }
+    }
+  })
+  ipcMain.handle('window-minimize', () => mainWindow?.minimize())
+  ipcMain.handle('window-maximize', () => {
+    if (mainWindow?.isMaximized()) {
+      mainWindow.unmaximize()
+    } else {
+      mainWindow?.maximize()
+    }
+  })
+  ipcMain.handle('window-close', () => mainWindow?.close())
+  ipcMain.handle('window-is-maximized', () => mainWindow?.isMaximized() ?? false)
+
+  ipcMain.handle('download-update', () => {
+    autoUpdater.downloadUpdate()
+  })
+  ipcMain.handle('install-update', () => {
+    autoUpdater.quitAndInstall()
+  })
 
   initDB()
 

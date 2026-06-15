@@ -6,22 +6,20 @@ export default {
     dashboard: 'Dashboard',
     transactions: 'Transactions',
     categories: 'Categories',
-    exportExcel: 'Export Excel'
+    exportExcel: 'Export Excel',
+    checkUpdates: 'Check for Updates',
+    quickIncome: 'Add Income',
+    quickExpense: 'Add Expense',
+    syncSettings: 'Sync Settings'
   },
   common: {
     cancel: 'Cancel',
     save: 'Save',
-    type: 'Type',
-    amount: 'Amount',
-    category: 'Category',
-    date: 'Date',
-    note: 'Note',
-    manage: 'Manage',
+    confirm: 'Confirm',
     income: 'Income',
     expense: 'Expense',
-    color: 'Color',
-    categoryName: 'Category Name',
     noData: 'No data',
+    dateFormat: 'dd/mm/yyyy',
     placeholder: '0',
     optional: 'Additional details (optional)'
   },
@@ -30,9 +28,23 @@ export default {
     subtitle: 'Choose your language to get started',
     english: 'English',
     thai: 'ภาษาไทย',
-    langLabel: 'Language',
     later: 'You can change this later in the app settings.',
-    start: "Let's start!"
+    continue: 'Continue',
+    consentTitle: 'Privacy Notice',
+    consentDesc: 'Before you start, please review how NguenNguen handles your data:',
+    consentLocal:
+      'All your data (transactions, categories, budget) is stored locally on your device using SQLite. Nothing is sent to external servers.',
+    consentNoTrack: 'No analytics, telemetry, tracking cookies, or usage logs are collected.',
+    consentSync:
+      'Optional Google Drive sync uses your own Google account. Data is stored on your Drive and never shared with us.',
+    consentUpdate:
+      'The app checks for updates by connecting to GitHub Releases. This network request only happens when you open the app or click "Check for Updates."',
+    consentNetwork:
+      'Internet access is only used for checking and downloading updates. No other network activity occurs.',
+    consentAgree: 'I have read and agree to the above.',
+    readyTitle: "You're all set!",
+    readyDesc: 'You can now start tracking your expenses with NguenNguen.',
+    start: 'Get Started'
   },
   dashboard: {
     title: 'Dashboard',
@@ -76,15 +88,12 @@ export default {
     dateLabel: 'Date',
     noteLabel: 'Note',
     editLabel: 'Edit transaction',
-    confirmDelete: 'Confirm delete this item?',
-    fillAll: 'Please fill in all fields.',
     placeholder: '0.00',
     search: 'Search...',
     allCategories: 'All categories',
     fromDate: 'From',
     toDate: 'To',
-    previous: 'Previous',
-    next: 'Next',
+    resetFilters: 'Clear filters',
     showing: 'Showing {{start}}-{{end}} of {{total}}'
   },
   categories: {
@@ -100,9 +109,46 @@ export default {
     income: 'Income',
     nameLabel: 'Category Name',
     colorLabel: 'Select pastel color',
-    confirmDelete:
-      'Are you sure you want to delete this category? Items using it may not display the category.',
     editLabel: 'Edit'
+  },
+  update: {
+    checking: 'Checking for updates...',
+    available: 'Update {{version}} available',
+    downloading: 'Downloading... {{percent}}%',
+    downloaded: 'Update downloaded. Restart to install?',
+    noUpdate: "You're up to date!",
+    error: 'Update error: {{msg}}',
+    restart: 'Restart now',
+    later: 'Later',
+    checkAgain: 'Check again',
+    downloadError: 'Download failed. Check your connection.'
+  },
+  sync: {
+    sectionTitle: 'Google Drive Sync',
+    clientIdPlaceholder: 'Paste your OAuth Client ID',
+    clientIdGuide: 'How to get your Client ID →',
+    clientIdRequired: 'Please enter your Client ID.',
+    clientIdInvalid: 'Invalid Client ID format. It should end with .apps.googleusercontent.com',
+    clientIdSaved: 'Client ID saved!',
+    signIn: 'Sign in with Google',
+    signOut: 'Disconnect',
+    signedInAs: 'Signed in',
+    notSignedIn: 'Not connected',
+    lastSync: 'Last synced: {{time}}',
+    syncNow: 'Sync Now',
+    pushData: 'Push to Drive',
+    pullData: 'Pull from Drive',
+    syncing: 'Syncing...',
+    success: 'Sync completed!',
+    error: 'Sync failed: {{msg}}',
+    privacyNote:
+      'Your data is synced to Google Drive using your own Google account. NguenNguen has no access to your data.'
+  },
+  about: {
+    title: 'About NguenNguen',
+    sectionTitle: 'About NguenNguen',
+    version: 'Version {{version}}',
+    github: 'GitHub Repository'
   },
   export: {
     dateCol: 'Date',

@@ -1,0 +1,18 @@
+{
+  "GHSA-4r6h-8v6p-xvw6": {
+    "active": true,
+    "notes": "xlsx prototype pollution — no fix available. Low risk: xlsx only used for local Excel export of user's own data, never parses external files."
+  },
+  "GHSA-5pgg-2g8v-p4x9": {
+    "active": true,
+    "notes": "xlsx ReDoS — no fix available. Low risk: only used for local Excel export, never parses untrusted input."
+  },
+  "GHSA-gv7w-rqvm-qjhr": {
+    "active": true,
+    "notes": "xlsx vulnerability — no fix available. Low risk: export-only usage."
+  },
+  "GHSA-g7r4-m6w7-qqqr": {
+    "active": true,
+    "notes": "xlsx vulnerability — no fix available. Low risk: export-only usage."
+  }
+}

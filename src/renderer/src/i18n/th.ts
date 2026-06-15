@@ -6,22 +6,20 @@ export default {
     dashboard: 'ภาพรวม',
     transactions: 'รายการ',
     categories: 'หมวดหมู่',
-    exportExcel: 'ส่งออก Excel'
+    exportExcel: 'ส่งออก Excel',
+    checkUpdates: 'ตรวจสอบอัปเดต',
+    quickIncome: 'เพิ่มรายรับ',
+    quickExpense: 'เพิ่มรายจ่าย',
+    syncSettings: 'ตั้งค่าการซิงค์'
   },
   common: {
     cancel: 'ยกเลิก',
     save: 'บันทึก',
-    type: 'ประเภท',
-    amount: 'จำนวนเงิน',
-    category: 'หมวดหมู่',
-    date: 'วันที่',
-    note: 'หมายเหตุ',
-    manage: 'จัดการ',
+    confirm: 'ยืนยัน',
     income: 'รายรับ',
     expense: 'รายจ่าย',
-    color: 'สี',
-    categoryName: 'ชื่อหมวดหมู่',
     noData: 'ไม่มีข้อมูล',
+    dateFormat: 'วว/ดด/ปปปป',
     placeholder: '0',
     optional: 'รายละเอียดเพิ่มเติม (ไม่บังคับ)'
   },
@@ -30,9 +28,23 @@ export default {
     subtitle: 'เลือกภาษาเพื่อเริ่มต้นใช้งาน',
     english: 'English',
     thai: 'ภาษาไทย',
-    langLabel: 'ภาษา',
-    later: 'คุณสามารถเปลี่ยนภาษาได้ภายหลังในหน้าการตั้งค่า',
-    start: 'เริ่มใช้งาน!'
+    later: 'คุณสามารถเปลี่ยนภาษาได้ที่เมนูตั้งค่า',
+    continue: 'ดำเนินการต่อ',
+    consentTitle: 'ประกาศความเป็นส่วนตัว',
+    consentDesc: 'ก่อนเริ่มใช้งาน โปรดทราบว่า NguenNguen จัดการข้อมูลของคุณอย่างไร:',
+    consentLocal:
+      'ข้อมูลทั้งหมด (รายการ, หมวดหมู่, งบประมาณ) ถูกเก็บในเครื่องของคุณเท่านั้น โดยใช้ SQLite ไม่มีการส่งข้อมูลไปยังเซิร์ฟเวอร์ภายนอก',
+    consentNoTrack: 'ไม่มีระบบ analytics, telemetry, คุกกี้ติดตาม หรือบันทึกการใช้งานใดๆ',
+    consentSync:
+      'การซิงค์ผ่าน Google Drive เป็นทางเลือก โดยใช้บัญชี Google ของคุณเอง ข้อมูลถูกเก็บใน Drive ของคุณเท่านั้น ไม่มีการส่งข้อมูลให้เรา',
+    consentUpdate:
+      'แอปตรวจสอบอัปเดตโดยเชื่อมต่อกับ GitHub Releases การเชื่อมต่อนี้จะเกิดขึ้นเมื่อคุณเปิดแอปหรือกด "ตรวจสอบอัปเดต" เท่านั้น',
+    consentNetwork:
+      'การเชื่อมต่ออินเทอร์เน็ตใช้สำหรับตรวจสอบและดาวน์โหลดอัปเดตเท่านั้น ไม่มีการเชื่อมต่ออื่นใด',
+    consentAgree: 'ฉันได้รับทราบและยอมรับเงื่อนไขข้างต้น',
+    readyTitle: 'พร้อมใช้งานแล้ว!',
+    readyDesc: 'คุณสามารถเริ่มบันทึกรายรับ-รายจ่ายของคุณด้วย NguenNguen ได้ทันที',
+    start: 'เริ่มต้นใช้งาน'
   },
   dashboard: {
     title: 'ภาพรวม',
@@ -76,15 +88,12 @@ export default {
     dateLabel: 'วันที่',
     noteLabel: 'หมายเหตุ',
     editLabel: 'แก้ไขรายการ',
-    confirmDelete: 'ยืนยันการลบรายการนี้?',
-    fillAll: 'กรุณากรอกข้อมูลให้ครบ',
     placeholder: '0.00',
     search: 'ค้นหา...',
     allCategories: 'ทุกหมวดหมู่',
     fromDate: 'ตั้งแต่วันที่',
     toDate: 'ถึงวันที่',
-    previous: 'ก่อนหน้า',
-    next: 'ถัดไป',
+    resetFilters: 'ล้างตัวกรอง',
     showing: 'แสดง {{start}}-{{end}} จาก {{total}}'
   },
   categories: {
@@ -100,9 +109,46 @@ export default {
     income: 'รายรับ',
     nameLabel: 'ชื่อหมวดหมู่',
     colorLabel: 'เลือกสีพาสเทล',
-    confirmDelete:
-      'คุณแน่ใจหรือไม่ว่าต้องการลบหมวดหมู่นี้? การลบอาจทำให้รายการที่ใช้หมวดหมู่นี้ไม่แสดงผลหมวดหมู่',
     editLabel: 'แก้ไข'
+  },
+  update: {
+    checking: 'กำลังตรวจสอบอัปเดต...',
+    available: 'มีอัปเดต {{version}} ให้ดาวน์โหลด',
+    downloading: 'กำลังดาวน์โหลด... {{percent}}%',
+    downloaded: 'ดาวน์โหลดเสร็จแล้ว ต้องการติดตั้งตอนนี้หรือไม่?',
+    noUpdate: 'คุณใช้เวอร์ชันล่าสุดอยู่แล้ว!',
+    error: 'เกิดข้อผิดพลาด: {{msg}}',
+    restart: 'ติดตั้งและเริ่มใหม่',
+    later: 'ภายหลัง',
+    checkAgain: 'ตรวจสอบอีกครั้ง',
+    downloadError: 'ดาวน์โหลดล้มเหลว กรุณาตรวจสอบการเชื่อมต่อ'
+  },
+  sync: {
+    sectionTitle: 'ซิงค์ Google Drive',
+    clientIdPlaceholder: 'วาง OAuth Client ID ของคุณ',
+    clientIdGuide: 'วิธีรับ Client ID →',
+    clientIdRequired: 'กรุณาใส่ Client ID',
+    clientIdInvalid: 'รูปแบบ Client ID ไม่ถูกต้อง ต้องลงท้ายด้วย .apps.googleusercontent.com',
+    clientIdSaved: 'บันทึก Client ID แล้ว!',
+    signIn: 'เข้าสู่ระบบด้วย Google',
+    signOut: 'ยกเลิกการเชื่อมต่อ',
+    signedInAs: 'เชื่อมต่อแล้ว',
+    notSignedIn: 'ยังไม่ได้เชื่อมต่อ',
+    lastSync: 'ซิงค์ล่าสุด: {{time}}',
+    syncNow: 'ซิงค์ตอนนี้',
+    pushData: 'ส่งข้อมูลไปที่ Drive',
+    pullData: 'ดึงข้อมูลจาก Drive',
+    syncing: 'กำลังซิงค์...',
+    success: 'ซิงค์สำเร็จ!',
+    error: 'ซิงค์ล้มเหลว: {{msg}}',
+    privacyNote:
+      'ข้อมูลของคุณจะถูกซิงค์ไปยัง Google Drive โดยใช้บัญชี Google ของคุณเอง NguenNguen ไม่สามารถเข้าถึงข้อมูลของคุณได้'
+  },
+  about: {
+    title: 'เกี่ยวกับ NguenNguen',
+    sectionTitle: 'เกี่ยวกับ NguenNguen',
+    version: 'เวอร์ชัน {{version}}',
+    github: 'คลังบน GitHub'
   },
   export: {
     dateCol: 'วันที่',
