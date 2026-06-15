@@ -63,7 +63,7 @@ export default function Categories({ categories, onRefresh }: any) {
         <h2 className="text-2xl font-bold">{t('categories.title')}</h2>
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center space-x-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+          className="flex items-center space-x-2 bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg transition-colors"
         >
           <Plus size={20} />
           <span className="hidden md:inline">{t('categories.addNew')}</span>
@@ -90,84 +90,107 @@ export default function Categories({ categories, onRefresh }: any) {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {categories.map((c: any) => (
-                <tr
-                  key={c.id}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                >
-                  {editingId === c.id ? (
-                    <td colSpan={4} className="px-6 py-4">
-                      <form onSubmit={handleUpdate} className="flex items-center space-x-4">
-                        <input
-                          type="color"
-                          value={editData.color}
-                          onChange={(e) => setEditData({ ...editData, color: e.target.value })}
-                          className="h-8 w-8 rounded cursor-pointer"
+              {categories.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <svg
+                        className="w-16 h-16 text-gray-300 dark:text-gray-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1}
+                          d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"
                         />
-                        <input
-                          type="text"
-                          value={editData.name}
-                          onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                          className="px-3 py-1 border rounded bg-white dark:bg-gray-700 flex-1"
-                          required
-                        />
-                        <select
-                          value={editData.type}
-                          onChange={(e) => setEditData({ ...editData, type: e.target.value })}
-                          className="px-3 py-1 border rounded bg-white dark:bg-gray-700"
-                        >
-                          <option value="expense">{t('common.expense')}</option>
-                          <option value="income">{t('common.income')}</option>
-                        </select>
-                        <button type="submit" className="text-green-600 p-1">
-                          <Check size={20} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingId(null)}
-                          className="text-gray-500 p-1"
-                        >
-                          <X size={20} />
-                        </button>
-                      </form>
-                    </td>
-                  ) : (
-                    <>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div
-                          className="w-6 h-6 rounded-full"
-                          style={{ backgroundColor: c.color }}
-                        ></div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap font-medium">{c.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {c.type === 'income' ? (
-                          <span className="text-green-600">{t('common.income')}</span>
-                        ) : (
-                          <span className="text-pink-500">{t('common.expense')}</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                        <button
-                          onClick={() => {
-                            setEditingId(c.id)
-                            setEditData(c)
-                          }}
-                          className="text-blue-500 hover:text-blue-700"
-                        >
-                          <Edit2 size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(c.id)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </td>
-                    </>
-                  )}
+                      </svg>
+                      <p className="text-gray-400 dark:text-gray-500">{t('common.noData')}</p>
+                    </div>
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                categories.map((c: any) => (
+                  <tr
+                    key={c.id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  >
+                    {editingId === c.id ? (
+                      <td colSpan={4} className="px-6 py-4">
+                        <form onSubmit={handleUpdate} className="flex items-center space-x-4">
+                          <input
+                            type="color"
+                            value={editData.color}
+                            onChange={(e) => setEditData({ ...editData, color: e.target.value })}
+                            className="h-8 w-8 rounded cursor-pointer"
+                          />
+                          <input
+                            type="text"
+                            value={editData.name}
+                            onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                            className="px-3 py-1 border rounded bg-white dark:bg-gray-700 flex-1"
+                            required
+                          />
+                          <select
+                            value={editData.type}
+                            onChange={(e) => setEditData({ ...editData, type: e.target.value })}
+                            className="px-3 py-1 border rounded bg-white dark:bg-gray-700"
+                          >
+                            <option value="expense">{t('common.expense')}</option>
+                            <option value="income">{t('common.income')}</option>
+                          </select>
+                          <button type="submit" className="text-green-600 p-1">
+                            <Check size={20} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingId(null)}
+                            className="text-gray-500 p-1"
+                          >
+                            <X size={20} />
+                          </button>
+                        </form>
+                      </td>
+                    ) : (
+                      <>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div
+                            className="w-6 h-6 rounded-full"
+                            style={{ backgroundColor: c.color }}
+                          ></div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap font-medium">{c.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {c.type === 'income' ? (
+                            <span className="text-green-600">{t('common.income')}</span>
+                          ) : (
+                            <span className="text-rose-500">{t('common.expense')}</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                          <button
+                            onClick={() => {
+                              setEditingId(c.id)
+                              setEditData(c)
+                            }}
+                            className="text-teal-500 hover:text-teal-700"
+                          >
+                            <Edit2 size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(c.id)}
+                            className="text-rose-500 hover:text-rose-700"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -190,7 +213,7 @@ export default function Categories({ categories, onRefresh }: any) {
                       value="expense"
                       checked={formData.type === 'expense'}
                       onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                      className="text-pink-500"
+                      className="text-rose-500"
                     />
                     <span>{t('categories.expense')}</span>
                   </label>
@@ -254,7 +277,7 @@ export default function Categories({ categories, onRefresh }: any) {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                  className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors"
                 >
                   {t('common.save')}
                 </button>

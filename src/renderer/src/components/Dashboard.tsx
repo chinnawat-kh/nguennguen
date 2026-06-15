@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
-import { CalendarDays, CalendarRange, CalendarCheck } from 'lucide-react'
+import { TrendingUp, TrendingDown, Wallet } from 'lucide-react'
 import { useL } from '../i18n'
 
 export default function Dashboard({ transactions, budget, setBudget }: any) {
   const { t } = useL()
-  const [filterMode, setFilterMode] = useState<'daily' | 'monthly' | 'yearly'>('monthly')
+  const [filterMode, setFilterMode] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly')
   const [showBudgetModal, setShowBudgetModal] = useState(false)
   const [newBudget, setNewBudget] = useState(budget.toString())
 
@@ -14,15 +14,25 @@ export default function Dashboard({ transactions, budget, setBudget }: any) {
   const currentMonth = today.toISOString().substring(0, 7)
   const currentYear = today.toISOString().substring(0, 4)
 
+  const dayOfWeek = today.getDay()
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1))
+  const weekStart = monday.toISOString().substring(0, 10)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  const weekEnd = sunday.toISOString().substring(0, 10)
+
   const filteredTxs = useMemo(() => {
     if (filterMode === 'daily')
       return transactions.filter((t: any) => t.date.startsWith(currentDay))
+    if (filterMode === 'weekly')
+      return transactions.filter((t: any) => t.date >= weekStart && t.date <= weekEnd)
     if (filterMode === 'monthly')
       return transactions.filter((t: any) => t.date.startsWith(currentMonth))
     if (filterMode === 'yearly')
       return transactions.filter((t: any) => t.date.startsWith(currentYear))
     return transactions
-  }, [transactions, filterMode, currentDay, currentMonth, currentYear])
+  }, [transactions, filterMode, currentDay, weekStart, weekEnd, currentMonth, currentYear])
 
   const totalIncome = filteredTxs
     .filter((t: any) => t.type === 'income')
@@ -61,35 +71,16 @@ export default function Dashboard({ transactions, budget, setBudget }: any) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">{t('dashboard.title')}</h2>
-        <div className="flex space-x-1 bg-gray-200 dark:bg-gray-700 p-1 rounded-lg">
-          <button
-            onClick={() => setFilterMode('daily')}
-            className={`px-3 md:px-4 py-2 md:py-1 flex items-center space-x-2 rounded-md text-sm transition-colors ${filterMode === 'daily' ? 'bg-white dark:bg-gray-600 shadow' : 'hover:bg-gray-300 dark:hover:bg-gray-500'}`}
-          >
-            <span className="md:hidden">
-              <CalendarDays size={16} />
-            </span>
-            <span className="hidden md:inline">{t('dashboard.today')}</span>
-          </button>
-          <button
-            onClick={() => setFilterMode('monthly')}
-            className={`px-3 md:px-4 py-2 md:py-1 flex items-center space-x-2 rounded-md text-sm transition-colors ${filterMode === 'monthly' ? 'bg-white dark:bg-gray-600 shadow' : 'hover:bg-gray-300 dark:hover:bg-gray-500'}`}
-          >
-            <span className="md:hidden">
-              <CalendarRange size={16} />
-            </span>
-            <span className="hidden md:inline">{t('dashboard.thisMonth')}</span>
-          </button>
-          <button
-            onClick={() => setFilterMode('yearly')}
-            className={`px-3 md:px-4 py-2 md:py-1 flex items-center space-x-2 rounded-md text-sm transition-colors ${filterMode === 'yearly' ? 'bg-white dark:bg-gray-600 shadow' : 'hover:bg-gray-300 dark:hover:bg-gray-500'}`}
-          >
-            <span className="md:hidden">
-              <CalendarCheck size={16} />
-            </span>
-            <span className="hidden md:inline">{t('dashboard.thisYear')}</span>
-          </button>
-        </div>
+        <select
+          value={filterMode}
+          onChange={(e) => setFilterMode(e.target.value as any)}
+          className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-400 dark:focus:ring-teal-500 cursor-pointer"
+        >
+          <option value="daily">{t('dashboard.today')}</option>
+          <option value="weekly">{t('dashboard.thisWeek')}</option>
+          <option value="monthly">{t('dashboard.thisMonth')}</option>
+          <option value="yearly">{t('dashboard.thisYear')}</option>
+        </select>
       </div>
 
       {isOverBudget && filterMode === 'monthly' && (
@@ -100,23 +91,35 @@ export default function Dashboard({ transactions, budget, setBudget }: any) {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-6 rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
-            {t('dashboard.incomeLabel')}
-          </h3>
+        <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-6 rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300 overflow-hidden group">
+          <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-green-500/5 dark:bg-green-500/10 group-hover:scale-150 transition-transform duration-500" />
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              {t('dashboard.incomeLabel')}
+            </h3>
+            <TrendingUp size={20} className="text-green-400" />
+          </div>
           <p className="text-3xl font-bold text-green-500">฿{totalIncome.toLocaleString()}</p>
         </div>
-        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-6 rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
-            {t('dashboard.expenseLabel')}
-          </h3>
-          <p className="text-3xl font-bold text-pink-500">฿{totalExpense.toLocaleString()}</p>
+        <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-6 rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300 overflow-hidden group">
+          <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-rose-500/5 dark:bg-rose-500/10 group-hover:scale-150 transition-transform duration-500" />
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              {t('dashboard.expenseLabel')}
+            </h3>
+            <TrendingDown size={20} className="text-rose-400" />
+          </div>
+          <p className="text-3xl font-bold text-rose-500">฿{totalExpense.toLocaleString()}</p>
         </div>
-        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-6 rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
-            {t('dashboard.balanceLabel')}
-          </h3>
-          <p className={`text-3xl font-bold ${balance >= 0 ? 'text-blue-500' : 'text-pink-500'}`}>
+        <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-6 rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300 overflow-hidden group">
+          <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-teal-500/5 dark:bg-teal-500/10 group-hover:scale-150 transition-transform duration-500" />
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              {t('dashboard.balanceLabel')}
+            </h3>
+            <Wallet size={20} className="text-teal-400" />
+          </div>
+          <p className={`text-3xl font-bold ${balance >= 0 ? 'text-teal-500' : 'text-rose-500'}`}>
             ฿{balance.toLocaleString()}
           </p>
         </div>
@@ -163,7 +166,7 @@ export default function Dashboard({ transactions, budget, setBudget }: any) {
                   setNewBudget(budget.toString())
                   setShowBudgetModal(true)
                 }}
-                className="text-sm text-blue-500 hover:text-blue-600 transition-colors"
+                className="text-sm text-teal-500 hover:text-teal-600 transition-colors"
               >
                 {t('dashboard.budgetSetting')}
               </button>
@@ -197,13 +200,13 @@ export default function Dashboard({ transactions, budget, setBudget }: any) {
               )}
 
               {budget === 0 && (
-                <div className="text-center p-6 bg-blue-50 dark:bg-gray-700/50 rounded-lg border border-dashed border-blue-200 dark:border-gray-600">
+                <div className="text-center p-6 bg-teal-50 dark:bg-gray-700/50 rounded-lg border border-dashed border-teal-200 dark:border-gray-600">
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                     {t('dashboard.noBudgetSet')}
                   </p>
                   <button
                     onClick={() => setShowBudgetModal(true)}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors"
+                    className="px-4 py-2 bg-teal-500 text-white rounded-lg text-sm hover:bg-teal-600 transition-colors"
                   >
                     {t('dashboard.setBudgetCTA')}
                   </button>
@@ -237,7 +240,7 @@ export default function Dashboard({ transactions, budget, setBudget }: any) {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                  className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors"
                 >
                   {t('common.save')}
                 </button>

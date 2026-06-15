@@ -81,7 +81,7 @@ export default function App() {
       }}
       className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 ${
         activeTab === id
-          ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 shadow-sm transform scale-105'
+          ? 'bg-teal-100 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 shadow-sm transform scale-105'
           : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:translate-x-1'
       }`}
     >
@@ -113,7 +113,7 @@ export default function App() {
         }`}
       >
         <div className="p-6 flex items-center justify-between">
-          <h1 className="text-2xl font-black bg-gradient-to-r from-blue-500 to-teal-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-black bg-gradient-to-r from-teal-500 to-emerald-400 bg-clip-text text-transparent">
             {t('app.name')}
           </h1>
           <button className="md:hidden text-gray-500" onClick={() => setIsSidebarOpen(false)}>
@@ -131,14 +131,14 @@ export default function App() {
               {t('dashboard.balanceLabel')}
             </span>
             <span
-              className={`text-sm font-bold ${balance >= 0 ? 'text-blue-500' : 'text-pink-500'}`}
+              className={`text-sm font-bold ${balance >= 0 ? 'text-teal-500' : 'text-rose-500'}`}
             >
               ฿{balance.toLocaleString()}
             </span>
           </div>
           <button
             onClick={handleExport}
-            className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+            className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
           >
             <Download size={18} />
             <span className="font-semibold">{t('nav.exportExcel')}</span>
@@ -173,7 +173,7 @@ export default function App() {
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-auto p-4 md:p-8 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
+        <main className="flex-1 overflow-auto p-4 md:p-8 bg-gradient-to-br from-teal-50/50 to-emerald-50/50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
           <div className="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
             {activeTab === 'dashboard' && (
               <Dashboard transactions={transactions} budget={budget} setBudget={setBudget} />

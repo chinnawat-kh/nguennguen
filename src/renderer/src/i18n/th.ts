@@ -37,6 +37,7 @@ export default {
   dashboard: {
     title: 'ภาพรวม',
     today: 'วันนี้',
+    thisWeek: 'สัปดาห์นี้',
     thisMonth: 'เดือนนี้',
     thisYear: 'ปีนี้',
     incomeLabel: 'รายรับ',
@@ -77,7 +78,14 @@ export default {
     editLabel: 'แก้ไขรายการ',
     confirmDelete: 'ยืนยันการลบรายการนี้?',
     fillAll: 'กรุณากรอกข้อมูลให้ครบ',
-    placeholder: '0.00'
+    placeholder: '0.00',
+    search: 'ค้นหา...',
+    allCategories: 'ทุกหมวดหมู่',
+    fromDate: 'ตั้งแต่วันที่',
+    toDate: 'ถึงวันที่',
+    previous: 'ก่อนหน้า',
+    next: 'ถัดไป',
+    showing: 'แสดง {{start}}-{{end}} จาก {{total}}'
   },
   categories: {
     title: 'จัดการหมวดหมู่',

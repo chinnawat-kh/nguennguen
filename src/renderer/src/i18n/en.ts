@@ -37,6 +37,7 @@ export default {
   dashboard: {
     title: 'Dashboard',
     today: 'Today',
+    thisWeek: 'This week',
     thisMonth: 'This month',
     thisYear: 'This year',
     incomeLabel: 'Income',
@@ -77,7 +78,14 @@ export default {
     editLabel: 'Edit transaction',
     confirmDelete: 'Confirm delete this item?',
     fillAll: 'Please fill in all fields.',
-    placeholder: '0.00'
+    placeholder: '0.00',
+    search: 'Search...',
+    allCategories: 'All categories',
+    fromDate: 'From',
+    toDate: 'To',
+    previous: 'Previous',
+    next: 'Next',
+    showing: 'Showing {{start}}-{{end}} of {{total}}'
   },
   categories: {
     title: 'Categories',
