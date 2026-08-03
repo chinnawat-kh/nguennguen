@@ -1,6 +1,5 @@
 import { type JSX } from 'react'
 import { Download, X } from 'lucide-react'
-import * as XLSX from 'xlsx'
 import Modal from './Modal'
 import SyncSection from './SyncSection'
 import AboutSection from './AboutSection'
@@ -39,7 +38,8 @@ export default function SettingsModal({
         <section>
           <h3 className={sectionHeader}>{t('export.sheetName')}</h3>
           <button
-            onClick={() => {
+            onClick={async () => {
+              const XLSX = await import('xlsx')
               const ws = XLSX.utils.json_to_sheet(
                 transactions.map((tx) => ({
                   [t('export.dateCol')]: tx.date,

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, net } from 'electron'
+import { app, BrowserWindow, net, safeStorage } from 'electron'
 import { createServer, type Server } from 'http'
 import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'fs'
 import { join } from 'path'
@@ -42,26 +42,27 @@ interface Tokens {
 }
 
 interface TransactionRecord {
-  id: number
+  sync_id: string
   type: string
   amount: number
-  category_id: number
+  category_sync_id: string | null
   date: string
   note?: string
   updated_at?: string
+  deleted_at?: string
 }
 
 interface CategoryRecord {
-  id: number
+  sync_id: string
   name: string
   type: string
   icon?: string
   color?: string
   updated_at?: string
+  deleted_at?: string
 }
 
 interface BudgetRecord {
-  id: number
   month: string
   amount: number
   updated_at?: string
@@ -73,6 +74,35 @@ export interface SyncPayload {
   transactions: TransactionRecord[]
   categories: CategoryRecord[]
   budgets: BudgetRecord[]
+}
+
+function normalizeSyncPayload(data: Record<string, unknown>): SyncPayload {
+  const transactions = Array.isArray(data.transactions) ? data.transactions : []
+  const categories = Array.isArray(data.categories) ? data.categories : []
+  const budgets = Array.isArray(data.budgets) ? data.budgets : []
+  return {
+    version: 2,
+    syncedAt: typeof data.syncedAt === 'string' ? data.syncedAt : new Date(0).toISOString(),
+    transactions: transactions.map((value) => {
+      const item = value as Record<string, unknown>
+      return {
+        ...item,
+        sync_id: String(item.sync_id || `legacy-transactions-${item.id}`),
+        category_sync_id:
+          item.category_sync_id == null && item.category_id != null
+            ? `legacy-categories-${item.category_id}`
+            : (item.category_sync_id as string | null)
+      } as TransactionRecord
+    }),
+    categories: categories.map((value) => {
+      const item = value as Record<string, unknown>
+      return {
+        ...item,
+        sync_id: String(item.sync_id || `legacy-categories-${item.id}`)
+      } as CategoryRecord
+    }),
+    budgets: budgets as BudgetRecord[]
+  }
 }
 
 // --- Client ID management ---
@@ -115,7 +145,11 @@ function generateCodeChallenge(verifier: string): string {
 function loadTokens(): Tokens | null {
   try {
     if (existsSync(TOKEN_PATH)) {
-      return JSON.parse(readFileSync(TOKEN_PATH, 'utf-8'))
+      const stored = JSON.parse(readFileSync(TOKEN_PATH, 'utf-8'))
+      if (stored.encrypted && safeStorage.isEncryptionAvailable()) {
+        return JSON.parse(safeStorage.decryptString(Buffer.from(stored.encrypted, 'base64')))
+      }
+      return stored as Tokens
     }
   } catch {
     console.error('[sync] Corrupted token file')
@@ -124,7 +158,11 @@ function loadTokens(): Tokens | null {
 }
 
 function saveTokens(tokens: Tokens): void {
-  writeFileSync(TOKEN_PATH, JSON.stringify(tokens, null, 2))
+  const serialized = JSON.stringify(tokens)
+  const stored = safeStorage.isEncryptionAvailable()
+    ? { encrypted: safeStorage.encryptString(serialized).toString('base64') }
+    : tokens
+  writeFileSync(TOKEN_PATH, JSON.stringify(stored, null, 2), { mode: 0o600 })
 }
 
 export function clearTokens(): void {
@@ -220,6 +258,7 @@ export async function signIn(): Promise<boolean> {
   activeRedirectPort = await findAvailablePort(REDIRECT_PORT_START)
   const codeVerifier = generateCodeVerifier()
   const codeChallenge = generateCodeChallenge(codeVerifier)
+  const state = base64URLEncode(crypto.randomBytes(24))
   const redirectUri = `http://localhost:${activeRedirectPort}/callback`
 
   const authUrl =
@@ -230,6 +269,7 @@ export async function signIn(): Promise<boolean> {
     `&scope=${encodeURIComponent(SCOPES.join(' '))}` +
     `&code_challenge=${codeChallenge}` +
     `&code_challenge_method=S256` +
+    `&state=${encodeURIComponent(state)}` +
     `&access_type=offline` +
     `&prompt=consent`
 
@@ -254,6 +294,15 @@ export async function signIn(): Promise<boolean> {
         const url = new URL(req.url || '/', `http://127.0.0.1:${activeRedirectPort}`)
         const code = url.searchParams.get('code')
         const error = url.searchParams.get('error')
+        const returnedState = url.searchParams.get('state')
+
+        if (returnedState !== state) {
+          res.writeHead(400, { 'Content-Type': 'text/plain' })
+          res.end('Invalid OAuth state')
+          clearTimeout(timeout)
+          reject(new Error('Invalid OAuth state'))
+          return
+        }
 
         if (error) {
           res.writeHead(400, { 'Content-Type': 'text/html' })
@@ -360,7 +409,7 @@ async function readSyncFile(accessToken: string, fileId: string): Promise<SyncPa
       { headers: { Authorization: `Bearer ${accessToken}` } }
     )
     if (!response.ok) return null
-    return (await response.json()) as SyncPayload
+    return normalizeSyncPayload((await response.json()) as Record<string, unknown>)
   } catch (e) {
     console.error('[sync] Failed to read Drive file:', e)
     return null
@@ -395,7 +444,7 @@ export async function pushData(localData: {
   }
 
   const payload: SyncPayload = {
-    version: 1,
+    version: 2,
     syncedAt: new Date().toISOString(),
     transactions: localData.transactions,
     categories: localData.categories,

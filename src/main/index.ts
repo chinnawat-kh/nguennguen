@@ -3,6 +3,8 @@ import { autoUpdater } from 'electron-updater'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import * as validate from './validation'
+import { mergeByKey } from './merge'
 import {
   initDB,
   getTransactions,
@@ -29,6 +31,16 @@ import {
 } from './sync'
 
 let mainWindow: BrowserWindow | null = null
+
+type AppData = ReturnType<typeof getAllData>
+
+function mergeData(local: AppData, remote: AppData): AppData {
+  return {
+    transactions: mergeByKey(local.transactions, remote.transactions, (item) => item.sync_id),
+    categories: mergeByKey(local.categories, remote.categories, (item) => item.sync_id),
+    budgets: mergeByKey(local.budgets, remote.budgets, (item) => item.month)
+  }
+}
 
 function sendUpdateEvent(type: string, data?: unknown): void {
   const w = mainWindow
@@ -58,7 +70,8 @@ function createWindow(): void {
   })
 
   win.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+    const url = new URL(details.url)
+    if (url.protocol === 'https:') shell.openExternal(url.toString())
     return { action: 'deny' }
   })
 
@@ -101,16 +114,24 @@ app.whenReady().then(() => {
   autoUpdater.checkForUpdatesAndNotify()
 
   // IPC handlers
-  ipcMain.handle('get-transactions', (_, month) => getTransactions(month))
-  ipcMain.handle('add-transaction', (_, data) => addTransaction(data))
-  ipcMain.handle('update-transaction', (_, data) => updateTransaction(data))
-  ipcMain.handle('delete-transaction', (_, id) => deleteTransaction(id))
+  ipcMain.handle('get-transactions', (_, value) =>
+    getTransactions(value == null ? undefined : validate.month(value))
+  )
+  ipcMain.handle('add-transaction', (_, data) =>
+    addTransaction(validate.transaction(data) as never)
+  )
+  ipcMain.handle('update-transaction', (_, data) =>
+    updateTransaction(validate.transaction(data, true) as never)
+  )
+  ipcMain.handle('delete-transaction', (_, id) => deleteTransaction(validate.positiveId(id)))
   ipcMain.handle('get-categories', () => getCategories())
-  ipcMain.handle('add-category', (_, data) => addCategory(data))
-  ipcMain.handle('update-category', (_, data) => updateCategory(data))
-  ipcMain.handle('delete-category', (_, id) => deleteCategory(id))
-  ipcMain.handle('get-budget', (_, month) => getBudget(month))
-  ipcMain.handle('set-budget', (_, data) => setBudget(data))
+  ipcMain.handle('add-category', (_, data) => addCategory(validate.category(data) as never))
+  ipcMain.handle('update-category', (_, data) =>
+    updateCategory(validate.category(data, true) as never)
+  )
+  ipcMain.handle('delete-category', (_, id) => deleteCategory(validate.positiveId(id)))
+  ipcMain.handle('get-budget', (_, value) => getBudget(validate.month(value)))
+  ipcMain.handle('set-budget', (_, data) => setBudget(validate.budget(data) as never))
 
   ipcMain.handle('get-app-version', () => app.getVersion())
   ipcMain.handle('check-for-updates', () => {
@@ -120,7 +141,7 @@ app.whenReady().then(() => {
   // Sync handlers
   ipcMain.handle('sync-get-client-id', () => getClientId())
   ipcMain.handle('sync-set-client-id', (_, id: string) => {
-    setClientId(id)
+    setClientId(validate.clientId(id))
   })
   ipcMain.handle('sync-sign-in', async () => {
     try {
@@ -138,11 +159,10 @@ app.whenReady().then(() => {
   ipcMain.handle('sync-now', async () => {
     try {
       const localData = getAllData()
-      const result = await pushData(localData)
       const remoteData = await pullData()
-      if (remoteData && remoteData.transactions) {
-        replaceAllData(remoteData)
-      }
+      const mergedData = remoteData ? mergeData(localData, remoteData) : localData
+      const result = await pushData(mergedData)
+      replaceAllData(mergedData)
       return { success: true, syncedAt: result.syncedAt }
     } catch (e) {
       return { error: (e as Error).message }

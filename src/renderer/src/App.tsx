@@ -11,6 +11,7 @@ import SettingsModal from './components/SettingsModal'
 import { useL } from './i18n'
 import type { Transaction, Category, TabId } from './types'
 import { TAB_IDS } from './types'
+import { getCurrentMonth } from './dateUtils'
 
 interface NavItemProps {
   id: TabId
@@ -50,6 +51,7 @@ export default function App(): JSX.Element {
   const [showQuickAddModal, setShowQuickAddModal] = useState(false)
   const [quickAddType, setQuickAddType] = useState<'income' | 'expense'>('expense')
   const [appVersion, setAppVersion] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
   const { t, lang, setLang } = useL()
 
   useEffect(() => {
@@ -67,12 +69,21 @@ export default function App(): JSX.Element {
       setTransactions(txs)
       const cats = (await window.api.getCategories()) as Category[]
       setCategories(cats)
-      const currentMonth = new Date().toISOString().substring(0, 7)
+      const currentMonth = getCurrentMonth()
       const b = await window.api.getBudget(currentMonth)
       if (b) setBudget(b.amount)
-    } catch {
-      console.error('loadData failed')
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Unable to load data')
     }
+  }, [])
+
+  useEffect(() => {
+    const onUnhandled = (event: PromiseRejectionEvent): void => {
+      event.preventDefault()
+      setErrorMessage(event.reason instanceof Error ? event.reason.message : String(event.reason))
+    }
+    window.addEventListener('unhandledrejection', onUnhandled)
+    return () => window.removeEventListener('unhandledrejection', onUnhandled)
   }, [])
 
   useEffect(() => {
@@ -106,6 +117,18 @@ export default function App(): JSX.Element {
         />
       )}
       <div className="flex-1 flex overflow-hidden bg-gray-50 dark:bg-[#121212] text-gray-800 dark:text-gray-100 font-sans transition-colors duration-300">
+        {errorMessage && (
+          <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[100] max-w-lg rounded-lg bg-rose-600 px-4 py-3 text-sm text-white shadow-xl">
+            <button
+              className="mr-3 font-bold"
+              onClick={() => setErrorMessage('')}
+              aria-label="Dismiss"
+            >
+              ×
+            </button>
+            {errorMessage}
+          </div>
+        )}
         {firstRun ? (
           <SetupWizard onDone={() => setFirstRun(false)} />
         ) : (
