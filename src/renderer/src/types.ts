@@ -1,31 +1,5 @@
-export interface Transaction {
-  id: number
-  type: 'income' | 'expense'
-  amount: number
-  category_id: number
-  date: string
-  note?: string
-  updated_at?: string
-  category_name?: string
-  category_color?: string
-  category_icon?: string
-}
-
-export interface Category {
-  id: number
-  name: string
-  type: 'income' | 'expense'
-  icon?: string
-  color?: string
-  updated_at?: string
-}
-
-export interface Budget {
-  id: number
-  month: string
-  amount: number
-  updated_at?: string
-}
+export type { Transaction, Category, Budget, SyncStatus, SyncResult } from '../../shared/types'
+import type { Transaction, Category, Budget } from '../../shared/types'
 
 export interface SyncPayload {
   transactions: Transaction[]
@@ -34,16 +8,6 @@ export interface SyncPayload {
 }
 
 export type FilterMode = 'daily' | 'weekly' | 'monthly' | 'yearly'
-
-export interface SyncStatus {
-  signedIn: boolean
-  lastModifiedAt?: string
-}
-
-export interface SyncResult {
-  success: boolean
-  error?: string
-}
 
 export const TAB_IDS = {
   DASHBOARD: 'dashboard',

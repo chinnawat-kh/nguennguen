@@ -1,44 +1,5 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
-
-interface Transaction {
-  id: number
-  type: 'income' | 'expense'
-  amount: number
-  category_id: number
-  date: string
-  note?: string
-  updated_at?: string
-  category_name?: string
-  category_color?: string
-  category_icon?: string
-}
-
-interface Category {
-  id: number
-  name: string
-  type: 'income' | 'expense'
-  icon?: string
-  color?: string
-  updated_at?: string
-}
-
-interface Budget {
-  id: number
-  month: string
-  amount: number
-  updated_at?: string
-}
-
-interface SyncStatus {
-  signedIn: boolean
-  lastModifiedAt?: string
-}
-
-interface SyncResult {
-  success: boolean
-  syncedAt?: string
-  error?: string
-}
+import type { Transaction, Category, Budget, SyncStatus, SyncResult } from '../shared/types'
 
 interface UpdateEvent {
   type: string

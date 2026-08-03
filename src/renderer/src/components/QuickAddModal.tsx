@@ -3,6 +3,7 @@ import Modal from './Modal'
 import TransactionForm, { type TransactionFormData } from './TransactionForm'
 import { useL } from '../i18n'
 import { type Category } from '../types'
+import { getCurrentDay } from '../dateUtils'
 
 interface QuickAddModalProps {
   initialType: 'income' | 'expense'
@@ -39,7 +40,7 @@ export default function QuickAddModal({
           type: initialType,
           amount: '',
           category_id: '',
-          date: new Date().toISOString().substring(0, 10),
+          date: getCurrentDay(),
           note: ''
         }}
         categories={categories}

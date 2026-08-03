@@ -6,7 +6,7 @@ import TransactionFilters from './TransactionFilters'
 import TransactionTable from './TransactionTable'
 import { useL } from '../i18n'
 import { type Transaction, type Category, type FilterMode } from '../types'
-import { filterByMode } from '../dateUtils'
+import { filterByMode, getCurrentDay } from '../dateUtils'
 
 const PAGE_SIZE = 50
 
@@ -14,7 +14,7 @@ const defaultFormData: TransactionFormData = {
   type: 'expense',
   amount: '',
   category_id: '',
-  date: new Date().toISOString().substring(0, 10),
+  date: getCurrentDay(),
   note: ''
 }
 
@@ -156,7 +156,7 @@ export default function Transactions({
     setFormValues({
       type: tx.type,
       amount: String(tx.amount),
-      category_id: String(tx.category_id),
+      category_id: tx.category_id === null ? '' : String(tx.category_id),
       date: tx.date,
       note: tx.note || ''
     })

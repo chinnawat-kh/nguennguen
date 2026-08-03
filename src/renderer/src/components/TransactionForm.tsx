@@ -51,7 +51,11 @@ export default function TransactionForm({
               value="expense"
               checked={formData.type === 'expense'}
               onChange={(e) =>
-                setFormData({ ...formData, type: e.target.value as 'income' | 'expense' })
+                setFormData({
+                  ...formData,
+                  type: e.target.value as 'income' | 'expense',
+                  category_id: ''
+                })
               }
               className="text-rose-500"
             />
@@ -64,7 +68,11 @@ export default function TransactionForm({
               value="income"
               checked={formData.type === 'income'}
               onChange={(e) =>
-                setFormData({ ...formData, type: e.target.value as 'income' | 'expense' })
+                setFormData({
+                  ...formData,
+                  type: e.target.value as 'income' | 'expense',
+                  category_id: ''
+                })
               }
               className="text-green-500"
             />

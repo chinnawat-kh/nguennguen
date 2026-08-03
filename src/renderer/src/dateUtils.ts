@@ -1,15 +1,22 @@
-import { type Transaction, type FilterMode } from './types'
+import type { Transaction, FilterMode } from './types'
+
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 export function getCurrentDay(): string {
-  return new Date().toISOString().substring(0, 10)
+  return formatLocalDate(new Date())
 }
 
 export function getCurrentMonth(): string {
-  return new Date().toISOString().substring(0, 7)
+  return getCurrentDay().substring(0, 7)
 }
 
 export function getCurrentYear(): string {
-  return new Date().toISOString().substring(0, 4)
+  return String(new Date().getFullYear())
 }
 
 export function getWeekStart(): string {
@@ -17,7 +24,7 @@ export function getWeekStart(): string {
   const dayOfWeek = today.getDay()
   const monday = new Date(today)
   monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1))
-  return monday.toISOString().substring(0, 10)
+  return formatLocalDate(monday)
 }
 
 export function getWeekEnd(): string {
@@ -27,7 +34,7 @@ export function getWeekEnd(): string {
   monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1))
   const sunday = new Date(monday)
   sunday.setDate(monday.getDate() + 6)
-  return sunday.toISOString().substring(0, 10)
+  return formatLocalDate(sunday)
 }
 
 export function formatDisplayDate(iso: string): string {
