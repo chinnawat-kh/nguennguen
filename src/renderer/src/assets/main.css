@@ -49,6 +49,8 @@
   --color-bg: #fdfbf7;
   --color-text: #4a4a4a;
   --color-surface: #ffffff;
+  --radius-card: 1rem;
+  --focus-ring: #14b8a6;
 }
 
 .dark {
@@ -64,6 +66,73 @@ body {
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
+}
+
+button,
+input,
+select,
+textarea {
+  outline-color: var(--focus-ring);
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.field-error {
+  margin-top: 0.375rem;
+  color: #e11d48;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.icon-button {
+  display: inline-flex;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.625rem;
+  transition:
+    background-color 150ms,
+    color 150ms;
+}
+.icon-button:hover {
+  background: rgb(243 244 246);
+}
+.dark .icon-button:hover {
+  background: rgb(55 65 81);
+}
+.skeleton {
+  border-radius: var(--radius-card);
+  background: linear-gradient(
+    90deg,
+    rgb(229 231 235) 25%,
+    rgb(243 244 246) 50%,
+    rgb(229 231 235) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton 1.4s infinite;
+}
+.dark .skeleton {
+  background: linear-gradient(90deg, rgb(31 41 55) 25%, rgb(55 65 81) 50%, rgb(31 41 55) 75%);
+  background-size: 200% 100%;
+}
+@keyframes skeleton {
+  to {
+    background-position: -200% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .titlebar {

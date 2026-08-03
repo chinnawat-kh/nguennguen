@@ -3,6 +3,7 @@ import { Edit2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useL } from '../i18n'
 import { type Transaction } from '../types'
 import { formatDisplayDate } from '../dateUtils'
+import { formatCurrency } from '../formatters'
 
 interface TransactionTableProps {
   transactions: Transaction[]
@@ -51,10 +52,62 @@ export default function TransactionTable({
   hasActiveFilters
 }: TransactionTableProps): JSX.Element {
   const { t } = useL()
+  const { lang } = useL()
 
   return (
     <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50 overflow-hidden transition-all duration-300">
-      <div className="overflow-x-auto">
+      <div className="divide-y divide-gray-100 dark:divide-gray-700 md:hidden">
+        {transactions.map((tx) => (
+          <article key={tx.id} className="p-4 active:bg-gray-50 dark:active:bg-gray-700/40">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-semibold truncate">{tx.category_name || t('common.noData')}</p>
+                <p className="mt-1 text-xs text-gray-500">
+                  {formatDisplayDate(tx.date)}
+                  {tx.note ? ` · ${tx.note}` : ''}
+                </p>
+              </div>
+              <p
+                className={`shrink-0 text-base font-bold ${tx.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}
+              >
+                {tx.type === 'income' ? '+' : '−'}
+                {formatCurrency(tx.amount, lang)}
+              </p>
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              <span
+                className={`text-xs font-medium ${tx.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}
+              >
+                {tx.type === 'income' ? t('transactions.income') : t('transactions.expense')}
+              </span>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => onEdit(tx)}
+                  aria-label={`${t('categories.editLabel')} ${tx.category_name || ''}`}
+                  className="icon-button"
+                >
+                  <Edit2 size={17} />
+                </button>
+                <button
+                  onClick={() =>
+                    confirmDeleteId === tx.id ? onDelete(tx.id) : setConfirmDeleteId(tx.id)
+                  }
+                  aria-label={`${t('common.confirm')} ${tx.category_name || ''}`}
+                  className={`icon-button ${confirmDeleteId === tx.id ? 'bg-rose-100 text-rose-700' : 'text-rose-500'}`}
+                >
+                  <Trash2 size={17} />
+                </button>
+              </div>
+            </div>
+          </article>
+        ))}
+        {!transactions.length && (
+          <div className="p-10 text-center text-sm text-gray-500">
+            {t('transactions.noRecords')}
+          </div>
+        )}
+      </div>
+      <div className="hidden overflow-x-auto md:block">
         <table className="min-w-full divide-y divide-gray-200/50 dark:divide-gray-700/50">
           <thead className="bg-gray-50 dark:bg-gray-800/50 sticky top-0 z-10">
             <tr>
@@ -68,10 +121,15 @@ export default function TransactionTable({
                 <th
                   key={field}
                   className={`px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${hideMd ? 'hidden md:table-cell' : ''}`}
-                  onClick={() => onSort(field)}
                 >
-                  {label}
-                  <SortIcon field={field} sortField={sortField} sortDir={sortDir} />
+                  <button
+                    onClick={() => onSort(field)}
+                    className="inline-flex items-center"
+                    aria-label={`${label} ${sortDir}`}
+                  >
+                    {label}
+                    <SortIcon field={field} sortField={sortField} sortDir={sortDir} />
+                  </button>
                 </th>
               ))}
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -116,7 +174,8 @@ export default function TransactionTable({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-bold">
                   <span className={tx.type === 'income' ? 'text-green-600' : 'text-rose-600'}>
-                    {tx.type === 'income' ? '+' : '-'}฿{tx.amount.toLocaleString()}
+                    {tx.type === 'income' ? '+' : '-'}
+                    {formatCurrency(tx.amount, lang)}
                   </span>
                 </td>
                 <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 max-w-[200px] truncate">
@@ -144,12 +203,14 @@ export default function TransactionTable({
                       <button
                         onClick={() => onEdit(tx)}
                         className="text-teal-500 hover:text-teal-700 dark:hover:text-teal-400 transition-colors"
+                        aria-label={`${t('categories.editLabel')} ${tx.category_name || ''}`}
                       >
                         <Edit2 size={18} />
                       </button>
                       <button
                         onClick={() => setConfirmDeleteId(tx.id)}
                         className="text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 transition-colors"
+                        aria-label={`${t('common.confirm')} ${tx.category_name || ''}`}
                       >
                         <Trash2 size={18} />
                       </button>

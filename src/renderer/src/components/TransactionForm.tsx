@@ -27,10 +27,17 @@ export default function TransactionForm({
   const { t } = useL()
   const [formData, setFormData] = useState<TransactionFormData>(initialValues)
   const [submitting, setSubmitting] = useState(false)
+  const [errors, setErrors] = useState<Partial<Record<keyof TransactionFormData, string>>>({})
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
-    if (!formData.amount || !formData.category_id) return
+    const nextErrors: typeof errors = {}
+    if (!formData.amount || Number(formData.amount) <= 0)
+      nextErrors.amount = t('validation.amountPositive')
+    if (!formData.category_id) nextErrors.category_id = t('validation.categoryRequired')
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.date)) nextErrors.date = t('validation.dateRequired')
+    setErrors(nextErrors)
+    if (Object.keys(nextErrors).length) return
     setSubmitting(true)
     try {
       await onSubmit(formData)
@@ -86,13 +93,21 @@ export default function TransactionForm({
         <input
           type="number"
           step="0.01"
+          min="0.01"
           required
           value={formData.amount}
           onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+          aria-invalid={!!errors.amount}
+          aria-describedby={errors.amount ? 'amount-error' : undefined}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
           placeholder={t('transactions.placeholder')}
           autoFocus
         />
+        {errors.amount && (
+          <p id="amount-error" className="field-error">
+            {errors.amount}
+          </p>
+        )}
       </div>
 
       <div>
@@ -102,6 +117,7 @@ export default function TransactionForm({
           value={formData.category_id}
           onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+          aria-invalid={!!errors.category_id}
         >
           <option value="">{t('transactions.selectCategory')}</option>
           {categories
@@ -112,6 +128,7 @@ export default function TransactionForm({
               </option>
             ))}
         </select>
+        {errors.category_id && <p className="field-error">{errors.category_id}</p>}
       </div>
 
       <div>
@@ -121,6 +138,7 @@ export default function TransactionForm({
           onChange={(date) => setFormData({ ...formData, date })}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
         />
+        {errors.date && <p className="field-error">{errors.date}</p>}
       </div>
 
       <div>

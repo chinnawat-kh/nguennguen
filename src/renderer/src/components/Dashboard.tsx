@@ -5,6 +5,8 @@ import Modal from './Modal'
 import { useL } from '../i18n'
 import { type Transaction, type FilterMode } from '../types'
 import { filterByMode, getCurrentMonth } from '../dateUtils'
+import { formatCurrency } from '../formatters'
+import { useToast } from './toastContext'
 
 interface DashboardProps {
   transactions: Transaction[]
@@ -23,7 +25,8 @@ export default function Dashboard({
   budget,
   setBudget
 }: DashboardProps): JSX.Element {
-  const { t } = useL()
+  const { t, lang } = useL()
+  const { showToast } = useToast()
   const [filterMode, setFilterMode] = useState<FilterMode>('monthly')
   const [showBudgetModal, setShowBudgetModal] = useState(false)
   const [newBudget, setNewBudget] = useState(budget.toString())
@@ -61,6 +64,7 @@ export default function Dashboard({
       await window.api.setBudget({ month: currentMonth, amount })
       setBudget(amount)
       setShowBudgetModal(false)
+      showToast(t('common.saved'), 'success')
     }
   }
 
@@ -70,7 +74,12 @@ export default function Dashboard({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{t('dashboard.title')}</h2>
+        <div>
+          <p className="text-sm font-medium text-teal-600 dark:text-teal-400">
+            {t('dashboard.summary')}
+          </p>
+          <h2 className="text-2xl font-bold tracking-tight">{t('dashboard.title')}</h2>
+        </div>
         <select
           value={filterMode}
           onChange={(e) => setFilterMode(e.target.value as FilterMode)}
@@ -99,7 +108,9 @@ export default function Dashboard({
             </h3>
             <TrendingUp size={20} className="text-green-400" />
           </div>
-          <p className="text-3xl font-bold text-green-500">฿{totalIncome.toLocaleString()}</p>
+          <p className="text-3xl font-bold tabular-nums text-emerald-600">
+            {formatCurrency(totalIncome, lang)}
+          </p>
         </div>
         <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-6 rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300 overflow-hidden group">
           <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-rose-500/5 dark:bg-rose-500/10 group-hover:scale-150 transition-transform duration-500" />
@@ -109,7 +120,9 @@ export default function Dashboard({
             </h3>
             <TrendingDown size={20} className="text-rose-400" />
           </div>
-          <p className="text-3xl font-bold text-rose-500">฿{totalExpense.toLocaleString()}</p>
+          <p className="text-3xl font-bold tabular-nums text-rose-600">
+            {formatCurrency(totalExpense, lang)}
+          </p>
         </div>
         <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-6 rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300 overflow-hidden group">
           <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-teal-500/5 dark:bg-teal-500/10 group-hover:scale-150 transition-transform duration-500" />
@@ -120,7 +133,7 @@ export default function Dashboard({
             <Wallet size={20} className="text-teal-400" />
           </div>
           <p className={`text-3xl font-bold ${balance >= 0 ? 'text-teal-500' : 'text-rose-500'}`}>
-            ฿{balance.toLocaleString()}
+            {formatCurrency(balance, lang)}
           </p>
         </div>
       </div>
@@ -178,7 +191,7 @@ export default function Dashboard({
                   {t('dashboard.budgetUsed')}
                 </span>
                 <span className="font-bold">
-                  ฿{totalExpense.toLocaleString()} / ฿{budget.toLocaleString()}
+                  {formatCurrency(totalExpense, lang)} / {formatCurrency(budget, lang)}
                 </span>
               </div>
 
@@ -218,11 +231,15 @@ export default function Dashboard({
       </div>
 
       {showBudgetModal && (
-        <Modal size="sm">
-          <h3 className="text-xl font-bold mb-4">{t('dashboard.setBudgetModal')}</h3>
+        <Modal size="sm" onClose={() => setShowBudgetModal(false)} labelledBy="budget-modal-title">
+          <h3 id="budget-modal-title" className="text-xl font-bold mb-4">
+            {t('dashboard.setBudgetModal')}
+          </h3>
           <form onSubmit={handleBudgetSubmit} className="space-y-4">
             <input
               type="number"
+              min="0"
+              step="0.01"
               value={newBudget}
               onChange={(e) => setNewBudget(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none"

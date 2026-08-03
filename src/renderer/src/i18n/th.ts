@@ -21,7 +21,14 @@ export default {
     noData: 'ไม่มีข้อมูล',
     dateFormat: 'วว/ดด/ปปปป',
     placeholder: '0',
-    optional: 'รายละเอียดเพิ่มเติม (ไม่บังคับ)'
+    optional: 'รายละเอียดเพิ่มเติม (ไม่บังคับ)',
+    saved: 'บันทึกเรียบร้อย',
+    deleted: 'ลบเรียบร้อย'
+  },
+  validation: {
+    amountPositive: 'กรอกจำนวนเงินที่มากกว่าศูนย์',
+    categoryRequired: 'เลือกหมวดหมู่',
+    dateRequired: 'กรอกวันที่ให้ถูกต้อง'
   },
   setup: {
     welcome: 'ยินดีต้อนรับสู่ NguenNguen',
@@ -48,6 +55,7 @@ export default {
   },
   dashboard: {
     title: 'ภาพรวม',
+    summary: 'สรุปการเงิน',
     today: 'วันนี้',
     thisWeek: 'สัปดาห์นี้',
     thisMonth: 'เดือนนี้',

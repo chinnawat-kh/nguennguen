@@ -21,7 +21,14 @@ export default {
     noData: 'No data',
     dateFormat: 'dd/mm/yyyy',
     placeholder: '0',
-    optional: 'Additional details (optional)'
+    optional: 'Additional details (optional)',
+    saved: 'Saved successfully',
+    deleted: 'Deleted successfully'
+  },
+  validation: {
+    amountPositive: 'Enter an amount greater than zero.',
+    categoryRequired: 'Select a category.',
+    dateRequired: 'Enter a valid date.'
   },
   setup: {
     welcome: 'Welcome to NguenNguen',
@@ -48,6 +55,7 @@ export default {
   },
   dashboard: {
     title: 'Dashboard',
+    summary: 'Financial summary',
     today: 'Today',
     thisWeek: 'This week',
     thisMonth: 'This month',

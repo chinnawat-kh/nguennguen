@@ -12,6 +12,8 @@ import { useL } from './i18n'
 import type { Transaction, Category, TabId } from './types'
 import { TAB_IDS } from './types'
 import { getCurrentMonth } from './dateUtils'
+import { useToast } from './components/toastContext'
+import { formatCurrency } from './formatters'
 
 interface NavItemProps {
   id: TabId
@@ -25,6 +27,7 @@ function NavItem({ id, icon: Icon, label, activeTab, onClick }: NavItemProps): J
   return (
     <button
       onClick={() => onClick(id)}
+      aria-current={activeTab === id ? 'page' : undefined}
       className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 ${
         activeTab === id
           ? 'bg-teal-100 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 shadow-sm transform scale-105'
@@ -41,7 +44,9 @@ const STORAGE_KEY = 'nguennguen-lang'
 
 export default function App(): JSX.Element {
   const [firstRun, setFirstRun] = useState<boolean>(() => !localStorage.getItem(STORAGE_KEY))
-  const [activeTab, setActiveTab] = useState<TabId>(TAB_IDS.DASHBOARD)
+  const [activeTab, setActiveTab] = useState<TabId>(
+    () => (localStorage.getItem('nguennguen-tab') as TabId) || TAB_IDS.DASHBOARD
+  )
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('nguennguen-dark') === 'true')
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -51,8 +56,9 @@ export default function App(): JSX.Element {
   const [showQuickAddModal, setShowQuickAddModal] = useState(false)
   const [quickAddType, setQuickAddType] = useState<'income' | 'expense'>('expense')
   const [appVersion, setAppVersion] = useState('')
-  const [errorMessage, setErrorMessage] = useState('')
+  const [loading, setLoading] = useState(true)
   const { t, lang, setLang } = useL()
+  const { showToast } = useToast()
 
   useEffect(() => {
     localStorage.setItem('nguennguen-dark', String(darkMode))
@@ -73,18 +79,13 @@ export default function App(): JSX.Element {
       const b = await window.api.getBudget(currentMonth)
       if (b) setBudget(b.amount)
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to load data')
+      showToast(error instanceof Error ? error.message : 'Unable to load data', 'error')
+    } finally {
+      setLoading(false)
     }
-  }, [])
+  }, [showToast])
 
-  useEffect(() => {
-    const onUnhandled = (event: PromiseRejectionEvent): void => {
-      event.preventDefault()
-      setErrorMessage(event.reason instanceof Error ? event.reason.message : String(event.reason))
-    }
-    window.addEventListener('unhandledrejection', onUnhandled)
-    return () => window.removeEventListener('unhandledrejection', onUnhandled)
-  }, [])
+  useEffect(() => localStorage.setItem('nguennguen-tab', activeTab), [activeTab])
 
   useEffect(() => {
     const init = async (): Promise<void> => {
@@ -117,18 +118,6 @@ export default function App(): JSX.Element {
         />
       )}
       <div className="flex-1 flex overflow-hidden bg-gray-50 dark:bg-[#121212] text-gray-800 dark:text-gray-100 font-sans transition-colors duration-300">
-        {errorMessage && (
-          <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[100] max-w-lg rounded-lg bg-rose-600 px-4 py-3 text-sm text-white shadow-xl">
-            <button
-              className="mr-3 font-bold"
-              onClick={() => setErrorMessage('')}
-              aria-label="Dismiss"
-            >
-              ×
-            </button>
-            {errorMessage}
-          </div>
-        )}
         {firstRun ? (
           <SetupWizard onDone={() => setFirstRun(false)} />
         ) : (
@@ -188,7 +177,7 @@ export default function App(): JSX.Element {
                 <p
                   className={`text-xl font-bold ${balance >= 0 ? 'text-teal-500' : 'text-rose-500'}`}
                 >
-                  ฿{balance.toLocaleString()}
+                  {formatCurrency(balance, lang)}
                 </p>
               </div>
             </div>
@@ -197,17 +186,33 @@ export default function App(): JSX.Element {
             <div className="flex-1 flex flex-col h-full overflow-hidden relative">
               <main className="flex-1 overflow-auto p-4 md:p-8 bg-gradient-to-br from-teal-50/50 to-emerald-50/50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
                 <div className="max-w-6xl mx-auto animate-fade-in">
-                  {activeTab === TAB_IDS.DASHBOARD && (
-                    <Dashboard transactions={transactions} budget={budget} setBudget={setBudget} />
+                  {loading ? (
+                    <div className="grid gap-4" aria-label="Loading">
+                      <div className="skeleton h-10 w-48" />
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <div className="skeleton h-36" />
+                        <div className="skeleton h-36" />
+                        <div className="skeleton h-36" />
+                      </div>
+                      <div className="skeleton h-80" />
+                    </div>
+                  ) : (
+                    activeTab === TAB_IDS.DASHBOARD && (
+                      <Dashboard
+                        transactions={transactions}
+                        budget={budget}
+                        setBudget={setBudget}
+                      />
+                    )
                   )}
-                  {activeTab === TAB_IDS.TRANSACTIONS && (
+                  {!loading && activeTab === TAB_IDS.TRANSACTIONS && (
                     <Transactions
                       transactions={transactions}
                       categories={categories}
                       onRefresh={loadData}
                     />
                   )}
-                  {activeTab === TAB_IDS.CATEGORIES && (
+                  {!loading && activeTab === TAB_IDS.CATEGORIES && (
                     <Categories categories={categories} onRefresh={loadData} />
                   )}
                 </div>

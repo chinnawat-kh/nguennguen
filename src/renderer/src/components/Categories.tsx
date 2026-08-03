@@ -3,6 +3,7 @@ import { Plus, Trash2, Edit2, Check, X } from 'lucide-react'
 import Modal from './Modal'
 import { useL } from '../i18n'
 import { type Category } from '../types'
+import { useToast } from './toastContext'
 
 interface CategoriesProps {
   categories: Category[]
@@ -23,6 +24,7 @@ const pastelColors = [
 
 export default function Categories({ categories, onRefresh }: CategoriesProps): JSX.Element {
   const { t } = useL()
+  const { showToast } = useToast()
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
@@ -49,6 +51,7 @@ export default function Categories({ categories, onRefresh }: CategoriesProps): 
     setShowAddModal(false)
     setFormData({ name: '', type: 'expense', icon: 'Tag', color: defaultColor })
     onRefresh()
+    showToast(t('common.saved'), 'success')
   }
 
   const handleUpdate = async (e: React.FormEvent): Promise<void> => {
@@ -57,12 +60,14 @@ export default function Categories({ categories, onRefresh }: CategoriesProps): 
     await window.api.updateCategory(editData)
     setEditingId(null)
     onRefresh()
+    showToast(t('common.saved'), 'success')
   }
 
   const handleDelete = async (id: number): Promise<void> => {
     await window.api.deleteCategory(id)
     setConfirmDeleteId(null)
     onRefresh()
+    showToast(t('common.deleted'), 'success')
   }
 
   return (
@@ -230,8 +235,10 @@ export default function Categories({ categories, onRefresh }: CategoriesProps): 
       </div>
 
       {showAddModal && (
-        <Modal>
-          <h3 className="text-xl font-bold mb-4">{t('categories.addModalTitle')}</h3>
+        <Modal onClose={() => setShowAddModal(false)} labelledBy="category-modal-title">
+          <h3 id="category-modal-title" className="text-xl font-bold mb-4">
+            {t('categories.addModalTitle')}
+          </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">{t('categories.typeLabel')}</label>

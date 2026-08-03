@@ -7,6 +7,7 @@ import TransactionTable from './TransactionTable'
 import { useL } from '../i18n'
 import { type Transaction, type Category, type FilterMode } from '../types'
 import { filterByMode, getCurrentDay } from '../dateUtils'
+import { useToast } from './toastContext'
 
 const PAGE_SIZE = 50
 
@@ -30,6 +31,7 @@ export default function Transactions({
   onRefresh
 }: TransactionsProps): JSX.Element {
   const { t } = useL()
+  const { showToast } = useToast()
   const [filterMode, setFilterMode] = useState<FilterMode>('monthly')
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingTx, setEditingTx] = useState<Transaction | null>(null)
@@ -133,6 +135,7 @@ export default function Transactions({
     setEditingTx(null)
     setFormValues(defaultFormData)
     onRefresh()
+    showToast(t('common.saved'), 'success')
   }
 
   const handleUpdate = async (data: TransactionFormData): Promise<void> => {
@@ -149,6 +152,7 @@ export default function Transactions({
     setEditingTx(null)
     setFormValues(defaultFormData)
     onRefresh()
+    showToast(t('common.saved'), 'success')
   }
 
   const handleEdit = (tx: Transaction): void => {
@@ -167,6 +171,7 @@ export default function Transactions({
     await window.api.deleteTransaction(id)
     setConfirmDeleteId(null)
     onRefresh()
+    showToast(t('common.deleted'), 'success')
   }
 
   const handleModalCancel = (): void => {
@@ -247,8 +252,8 @@ export default function Transactions({
       />
 
       {showAddModal && (
-        <Modal>
-          <h3 className="text-xl font-bold mb-4">
+        <Modal onClose={handleModalCancel} labelledBy="transaction-modal-title">
+          <h3 id="transaction-modal-title" className="text-xl font-bold mb-4">
             {editingTx ? t('transactions.editLabel') : t('transactions.addModalTitle')}
           </h3>
           <TransactionForm

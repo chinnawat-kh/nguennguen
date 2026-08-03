@@ -41,7 +41,7 @@ export default function TransactionFilters({
 
   return (
     <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50 p-4 space-y-3">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -55,7 +55,7 @@ export default function TransactionFilters({
         <select
           value={filterMode}
           onChange={(e) => onFilterModeChange(e.target.value as FilterMode)}
-          className={`px-3 py-2 ${inputClass} cursor-pointer`}
+          className={`w-full px-3 py-2 sm:w-auto ${inputClass} cursor-pointer`}
         >
           <option value="daily">{t('dashboard.today')}</option>
           <option value="weekly">{t('dashboard.thisWeek')}</option>
@@ -63,13 +63,13 @@ export default function TransactionFilters({
           <option value="yearly">{t('dashboard.thisYear')}</option>
         </select>
       </div>
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-center">
         <select
           value={filterCategory}
           onChange={(e) =>
             onFilterCategoryChange(e.target.value === '' ? '' : Number(e.target.value))
           }
-          className={`px-3 py-2 ${inputClass}`}
+          className={`w-full px-3 py-2 ${inputClass}`}
         >
           <option value="">{t('transactions.allCategories')}</option>
           {categories.map((c) => (
@@ -78,7 +78,7 @@ export default function TransactionFilters({
             </option>
           ))}
         </select>
-        <div className="flex items-center gap-1.5">
+        <div className="grid gap-1.5">
           <label className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
             {t('transactions.fromDate')}
           </label>
@@ -88,7 +88,7 @@ export default function TransactionFilters({
             className={`px-2 py-2 ${inputClass}`}
           />
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="grid gap-1.5">
           <label className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
             {t('transactions.toDate')}
           </label>
