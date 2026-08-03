@@ -3,6 +3,7 @@ import { app } from 'electron'
 import { join } from 'path'
 import { randomUUID } from 'crypto'
 import { toSatang } from '../shared/money'
+import { migrateDatabase } from './migrations'
 
 const userDataPath = app.getPath('userData')
 const dbPath = join(userDataPath, 'nguennguen.sqlite')
@@ -12,81 +13,7 @@ const db = new Database(dbPath)
 db.pragma('foreign_keys = ON')
 
 export function initDB(): void {
-  const schemaVersion = db.pragma('user_version', { simple: true }) as number
-  const migration = db.transaction(() => {
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS categories (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        type TEXT NOT NULL,
-        icon TEXT,
-        color TEXT,
-        updated_at TEXT DEFAULT (datetime('now','localtime')),
-        sync_id TEXT,
-        deleted_at TEXT
-      );
-
-      CREATE TABLE IF NOT EXISTS transactions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        type TEXT NOT NULL,
-        amount REAL NOT NULL,
-        category_id INTEGER,
-        date TEXT NOT NULL,
-        note TEXT,
-        updated_at TEXT DEFAULT (datetime('now','localtime')),
-        FOREIGN KEY (category_id) REFERENCES categories (id),
-        sync_id TEXT,
-        deleted_at TEXT
-      );
-
-      CREATE TABLE IF NOT EXISTS budgets (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        month TEXT NOT NULL,
-        amount REAL NOT NULL,
-        updated_at TEXT DEFAULT (datetime('now','localtime')),
-        UNIQUE(month)
-      );
-    `)
-
-    // Migration: add updated_at to existing tables
-    for (const table of ['transactions', 'categories', 'budgets']) {
-      try {
-        db.exec(`ALTER TABLE ${table} ADD COLUMN updated_at TEXT`)
-        db.exec(
-          `UPDATE ${table} SET updated_at = datetime('now','localtime') WHERE updated_at IS NULL`
-        )
-      } catch {
-        // column already exists — ignore
-      }
-    }
-
-    for (const table of ['transactions', 'categories']) {
-      for (const column of ['sync_id TEXT', 'deleted_at TEXT']) {
-        try {
-          db.exec(`ALTER TABLE ${table} ADD COLUMN ${column}`)
-        } catch {
-          // column already exists
-        }
-      }
-      db.exec(`UPDATE ${table} SET sync_id = 'legacy-${table}-' || id WHERE sync_id IS NULL`)
-      db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_${table}_sync_id ON ${table}(sync_id)`)
-    }
-
-    if (schemaVersion < 3) {
-      for (const table of ['transactions', 'budgets']) {
-        try {
-          db.exec(`ALTER TABLE ${table} ADD COLUMN amount_satang INTEGER`)
-        } catch {
-          // column already exists
-        }
-        db.exec(
-          `UPDATE ${table} SET amount_satang = ROUND(amount * 100) WHERE amount_satang IS NULL`
-        )
-      }
-    }
-  })
-  migration()
-  db.pragma('user_version = 3')
+  migrateDatabase(db)
 
   const count = db.prepare('SELECT count(*) as count FROM categories').get() as { count: number }
   if (count.count === 0) {
