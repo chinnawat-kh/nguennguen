@@ -1,4 +1,4 @@
-import { type JSX } from 'react'
+import { useState, type JSX } from 'react'
 import Modal from './Modal'
 import TransactionForm, { type TransactionFormData } from './TransactionForm'
 import { useL } from '../i18n'
@@ -21,6 +21,12 @@ export default function QuickAddModal({
 }: QuickAddModalProps): JSX.Element {
   const { t } = useL()
   const { showToast } = useToast()
+  const [isDirty, setIsDirty] = useState(false)
+
+  const requestClose = (): void => {
+    if (isDirty && !window.confirm(t('transactions.discardChanges'))) return
+    onClose()
+  }
 
   const handleSubmit = async (data: TransactionFormData): Promise<void> => {
     await window.api.addTransaction({
@@ -36,7 +42,7 @@ export default function QuickAddModal({
   }
 
   return (
-    <Modal onClose={onClose} labelledBy="quick-add-title">
+    <Modal onClose={requestClose} labelledBy="quick-add-title">
       <h3 id="quick-add-title" className="text-xl font-bold mb-4">
         {t('transactions.addModalTitle')}
       </h3>
@@ -50,7 +56,8 @@ export default function QuickAddModal({
         }}
         categories={categories}
         onSubmit={handleSubmit}
-        onCancel={onClose}
+        onCancel={requestClose}
+        onDirtyChange={setIsDirty}
       />
     </Modal>
   )

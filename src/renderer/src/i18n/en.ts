@@ -54,6 +54,7 @@ export default {
     start: 'Get Started'
   },
   dashboard: {
+    allTime: 'All time',
     title: 'Dashboard',
     summary: 'Financial summary',
     today: 'Today',
@@ -65,18 +66,25 @@ export default {
     balanceLabel: 'Balance',
     expenseChart: 'Expense Breakdown',
     noExpenseData: 'No expense data',
-    budgetTitle: 'Monthly Budget',
+    addFirstExpense: 'Add first expense',
+    budgetTitle: 'Budget',
     budgetSetting: 'Set',
     budgetUsed: 'Used so far',
     overBudget: 'Over budget by ฿{{n}}',
     remainingBudget: 'Remaining ฿{{n}}',
     noBudgetSet: 'No budget set yet',
     setBudgetCTA: 'Set budget now',
-    setBudgetModal: 'Set Budget (THB)',
+    setBudgetModal: 'Set Monthly Budget (THB)',
+    budgetMonthlyHint:
+      'Daily, weekly, and yearly budgets are calculated automatically from this monthly budget.',
+    budgetSource: 'Calculated from a monthly budget of {{amount}}',
+    lastSixMonths: 'Last 6 months',
+    cashFlowTrend: 'Income and expense trend',
     budgetOverAlert: 'Alert!',
     budgetOverMsg: 'You have exceeded your monthly budget.'
   },
   transactions: {
+    discardChanges: 'Your changes have not been saved. Close this window anyway?',
     title: 'Transactions',
     addNew: 'Add new',
     dateCol: 'Date',
@@ -116,6 +124,7 @@ export default {
     expense: 'Expense',
     income: 'Income',
     nameLabel: 'Category Name',
+    namePlaceholder: 'e.g. Food, Transport, Salary',
     colorLabel: 'Select pastel color',
     editLabel: 'Edit'
   },

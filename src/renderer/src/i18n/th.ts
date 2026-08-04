@@ -54,6 +54,7 @@ export default {
     start: 'เริ่มต้นใช้งาน'
   },
   dashboard: {
+    allTime: 'ทั้งหมด',
     title: 'ภาพรวม',
     summary: 'สรุปการเงิน',
     today: 'วันนี้',
@@ -65,18 +66,24 @@ export default {
     balanceLabel: 'คงเหลือ',
     expenseChart: 'สัดส่วนค่าใช้จ่าย',
     noExpenseData: 'ไม่มีข้อมูลค่าใช้จ่าย',
-    budgetTitle: 'งบประมาณรายเดือน',
+    addFirstExpense: 'เพิ่มรายจ่ายแรก',
+    budgetTitle: 'งบประมาณ',
     budgetSetting: 'ตั้งค่า',
     budgetUsed: 'ใช้ไปแล้ว',
     overBudget: 'ใช้เกินงบไป ฿{{n}}',
     remainingBudget: 'เหลืองบ ฿{{n}}',
     noBudgetSet: 'ยังไม่ได้ตั้งงบประมาณ',
     setBudgetCTA: 'ตั้งงบประมาณเลย',
-    setBudgetModal: 'ตั้งค่างบประมาณ (บาท)',
+    setBudgetModal: 'ตั้งค่างบประมาณรายเดือน (บาท)',
+    budgetMonthlyHint: 'ระบบจะคำนวณงบรายวัน รายสัปดาห์ และรายปีจากงบรายเดือนนี้โดยอัตโนมัติ',
+    budgetSource: 'คำนวณจากงบรายเดือน {{amount}}',
+    lastSixMonths: 'ย้อนหลัง 6 เดือน',
+    cashFlowTrend: 'แนวโน้มรายรับและรายจ่าย',
     budgetOverAlert: 'แจ้งเตือน!',
     budgetOverMsg: 'คุณใช้เงินเกินงบประมาณที่ตั้งไว้แล้วในเดือนนี้'
   },
   transactions: {
+    discardChanges: 'ข้อมูลที่กรอกยังไม่ได้บันทึก ต้องการปิดหน้าต่างนี้หรือไม่?',
     title: 'รายการทั้งหมด',
     addNew: 'เพิ่มรายการใหม่',
     dateCol: 'วันที่',
@@ -116,6 +123,7 @@ export default {
     expense: 'รายจ่าย',
     income: 'รายรับ',
     nameLabel: 'ชื่อหมวดหมู่',
+    namePlaceholder: 'เช่น อาหาร, ค่าเดินทาง, เงินเดือน',
     colorLabel: 'เลือกสีพาสเทล',
     editLabel: 'แก้ไข'
   },

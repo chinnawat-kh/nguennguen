@@ -44,6 +44,7 @@ export default function Transactions({
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [page, setPage] = useState(1)
   const [formValues, setFormValues] = useState<TransactionFormData>(defaultFormData)
+  const [isFormDirty, setIsFormDirty] = useState(false)
 
   useEffect(() => {
     const handler = (e: KeyboardEvent): void => {
@@ -51,11 +52,8 @@ export default function Transactions({
         e.preventDefault()
         setEditingTx(null)
         setFormValues(defaultFormData)
+        setIsFormDirty(false)
         setShowAddModal(true)
-      }
-      if (e.key === 'Escape') {
-        setShowAddModal(false)
-        setEditingTx(null)
       }
     }
     window.addEventListener('keydown', handler)
@@ -134,6 +132,7 @@ export default function Transactions({
     setShowAddModal(false)
     setEditingTx(null)
     setFormValues(defaultFormData)
+    setIsFormDirty(false)
     onRefresh()
     showToast(t('common.saved'), 'success')
   }
@@ -151,11 +150,13 @@ export default function Transactions({
     setShowAddModal(false)
     setEditingTx(null)
     setFormValues(defaultFormData)
+    setIsFormDirty(false)
     onRefresh()
     showToast(t('common.saved'), 'success')
   }
 
   const handleEdit = (tx: Transaction): void => {
+    setIsFormDirty(false)
     setEditingTx(tx)
     setFormValues({
       type: tx.type,
@@ -175,9 +176,11 @@ export default function Transactions({
   }
 
   const handleModalCancel = (): void => {
+    if (isFormDirty && !window.confirm(t('transactions.discardChanges'))) return
     setShowAddModal(false)
     setEditingTx(null)
     setFormValues(defaultFormData)
+    setIsFormDirty(false)
   }
 
   const handleResetFilters = (): void => {
@@ -191,12 +194,22 @@ export default function Transactions({
   const hasActiveFilters = !!(searchQuery || filterCategory !== '' || filterFrom || filterTo)
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{t('transactions.title')}</h2>
+    <div className="space-y-5">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+            {t('nav.transactions')}
+          </p>
+          <h2 className="text-2xl font-extrabold tracking-[-0.035em] text-slate-950 dark:text-white md:text-3xl">
+            {t('transactions.title')}
+          </h2>
+        </div>
         <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center space-x-2 bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg transition-colors"
+          onClick={() => {
+            setIsFormDirty(false)
+            setShowAddModal(true)
+          }}
+          className="button-primary"
         >
           <Plus size={20} />
           <span className="hidden md:inline">{t('transactions.addNew')}</span>
@@ -262,6 +275,7 @@ export default function Transactions({
             categories={categories}
             onSubmit={editingTx ? handleUpdate : handleSubmit}
             onCancel={handleModalCancel}
+            onDirtyChange={setIsFormDirty}
           />
         </Modal>
       )}

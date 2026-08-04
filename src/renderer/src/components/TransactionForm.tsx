@@ -16,18 +16,25 @@ interface TransactionFormProps {
   categories: Category[]
   onSubmit: (data: TransactionFormData) => Promise<void>
   onCancel: () => void
+  onDirtyChange?: (dirty: boolean) => void
 }
 
 export default function TransactionForm({
   initialValues,
   categories,
   onSubmit,
-  onCancel
+  onCancel,
+  onDirtyChange
 }: TransactionFormProps): JSX.Element {
   const { t } = useL()
   const [formData, setFormData] = useState<TransactionFormData>(initialValues)
   const [submitting, setSubmitting] = useState(false)
   const [errors, setErrors] = useState<Partial<Record<keyof TransactionFormData, string>>>({})
+
+  const updateFormData = (nextData: TransactionFormData): void => {
+    setFormData(nextData)
+    onDirtyChange?.(JSON.stringify(nextData) !== JSON.stringify(initialValues))
+  }
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
@@ -58,7 +65,7 @@ export default function TransactionForm({
               value="expense"
               checked={formData.type === 'expense'}
               onChange={(e) =>
-                setFormData({
+                updateFormData({
                   ...formData,
                   type: e.target.value as 'income' | 'expense',
                   category_id: ''
@@ -75,7 +82,7 @@ export default function TransactionForm({
               value="income"
               checked={formData.type === 'income'}
               onChange={(e) =>
-                setFormData({
+                updateFormData({
                   ...formData,
                   type: e.target.value as 'income' | 'expense',
                   category_id: ''
@@ -96,10 +103,10 @@ export default function TransactionForm({
           min="0.01"
           required
           value={formData.amount}
-          onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+          onChange={(e) => updateFormData({ ...formData, amount: e.target.value })}
           aria-invalid={!!errors.amount}
           aria-describedby={errors.amount ? 'amount-error' : undefined}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+          className="control w-full px-3 py-2 bg-white dark:bg-slate-900 focus:outline-none"
           placeholder={t('transactions.placeholder')}
           autoFocus
         />
@@ -115,8 +122,8 @@ export default function TransactionForm({
         <select
           required
           value={formData.category_id}
-          onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+          onChange={(e) => updateFormData({ ...formData, category_id: e.target.value })}
+          className="control w-full px-3 py-2 bg-white dark:bg-slate-900 focus:outline-none"
           aria-invalid={!!errors.category_id}
         >
           <option value="">{t('transactions.selectCategory')}</option>
@@ -135,8 +142,8 @@ export default function TransactionForm({
         <label className="block text-sm font-medium mb-1">{t('transactions.dateLabel')}</label>
         <DateInput
           value={formData.date}
-          onChange={(date) => setFormData({ ...formData, date })}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+          onChange={(date) => updateFormData({ ...formData, date })}
+          className="control w-full px-3 py-2 bg-white dark:bg-slate-900 text-sm focus:outline-none"
         />
         {errors.date && <p className="field-error">{errors.date}</p>}
       </div>
@@ -146,8 +153,8 @@ export default function TransactionForm({
         <input
           type="text"
           value={formData.note}
-          onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+          onChange={(e) => updateFormData({ ...formData, note: e.target.value })}
+          className="control w-full px-3 py-2 bg-white dark:bg-slate-900 focus:outline-none"
           placeholder={t('common.optional')}
         />
       </div>
@@ -161,11 +168,7 @@ export default function TransactionForm({
         >
           {t('common.cancel')}
         </button>
-        <button
-          type="submit"
-          disabled={submitting}
-          className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors disabled:opacity-50"
-        >
+        <button type="submit" disabled={submitting} className="button-primary">
           {t('common.save')}
         </button>
       </div>

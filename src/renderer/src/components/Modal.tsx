@@ -67,7 +67,7 @@ export default function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
-        className={`bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl ${sizeMap[size]} w-full max-h-[92vh] overflow-y-auto p-5 sm:p-6 shadow-2xl border border-gray-100 dark:border-gray-700 animate-scale-in ${className}`}
+        className={`bg-white dark:bg-[#121a2b] rounded-t-2xl sm:rounded-2xl ${sizeMap[size]} w-full max-h-[92vh] overflow-y-auto p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-700 animate-scale-in ${className}`}
       >
         {children}
       </div>

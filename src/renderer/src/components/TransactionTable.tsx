@@ -55,7 +55,7 @@ export default function TransactionTable({
   const { lang } = useL()
 
   return (
-    <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50 overflow-hidden transition-all duration-300">
+    <div className="surface-card overflow-hidden">
       <div className="divide-y divide-gray-100 dark:divide-gray-700 md:hidden">
         {transactions.map((tx) => (
           <article key={tx.id} className="p-4 active:bg-gray-50 dark:active:bg-gray-700/40">

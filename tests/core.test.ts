@@ -4,6 +4,7 @@ import { mergeByKey } from '../src/main/merge.ts'
 import { budget, category, month, positiveId, transaction } from '../src/main/validation.ts'
 import { filterByMode, formatDisplayDate, parseDisplayDate } from '../src/renderer/src/dateUtils.ts'
 import { fromSatang, toSatang } from '../src/shared/money.ts'
+import { calculatePeriodBudget } from '../src/renderer/src/budgetUtils.ts'
 
 test('merge keeps the most recently updated record and tombstones', () => {
   const local = [{ sync_id: 'a', value: 1, updated_at: '2026-08-01T00:00:00Z' }]
@@ -46,4 +47,20 @@ test('money is rounded and stored as integer satang', () => {
   assert.equal(fromSatang(12345), 123.45)
   assert.throws(() => toSatang(Number.NaN))
   assert.throws(() => fromSatang(1.5))
+})
+
+test('budget periods are prorated from the monthly budget', () => {
+  const monthlyBudget = 31000
+  assert.equal(calculatePeriodBudget(monthlyBudget, 'daily', new Date(2026, 0, 15)), 1000)
+  assert.equal(calculatePeriodBudget(monthlyBudget, 'monthly'), monthlyBudget)
+  assert.equal(calculatePeriodBudget(monthlyBudget, 'yearly'), monthlyBudget * 12)
+
+  const crossMonthWeek = calculatePeriodBudget(
+    monthlyBudget,
+    'weekly',
+    new Date(2026, 0, 30),
+    '2026-01-29',
+    '2026-02-04'
+  )
+  assert.ok(Math.abs(crossMonthWeek - (3000 + (monthlyBudget / 28) * 4)) < 0.000001)
 })
