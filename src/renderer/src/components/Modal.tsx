@@ -1,9 +1,11 @@
-import { type ReactNode, type JSX } from 'react'
+import { useEffect, useRef, type ReactNode, type JSX } from 'react'
 
 interface ModalProps {
   children: ReactNode
   size?: 'sm' | 'md' | 'lg'
   className?: string
+  onClose?: () => void
+  labelledBy?: string
 }
 
 const sizeMap: Record<string, string> = {
@@ -12,11 +14,60 @@ const sizeMap: Record<string, string> = {
   lg: 'max-w-lg'
 }
 
-export default function Modal({ children, size = 'md', className = '' }: ModalProps): JSX.Element {
+export default function Modal({
+  children,
+  size = 'md',
+  className = '',
+  onClose,
+  labelledBy
+}: ModalProps): JSX.Element {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null
+    const dialog = dialogRef.current
+    dialog
+      ?.querySelector<HTMLElement>(
+        'button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      ?.focus()
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape' && onClose) onClose()
+      if (event.key !== 'Tab' || !dialog) return
+      const focusable = [
+        ...dialog.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
+        )
+      ]
+      if (!focusable.length) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      previous?.focus()
+    }
+  }, [onClose])
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-fade-in">
+    <div
+      className="fixed inset-0 bg-black/55 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 animate-fade-in"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose?.()
+      }}
+    >
       <div
-        className={`bg-white dark:bg-gray-800 rounded-xl ${sizeMap[size]} w-full p-6 shadow-xl border border-gray-100 dark:border-gray-700 animate-scale-in ${className}`}
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={labelledBy}
+        className={`bg-white dark:bg-[#121a2b] rounded-t-2xl sm:rounded-2xl ${sizeMap[size]} w-full max-h-[92vh] overflow-y-auto p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-700 animate-scale-in ${className}`}
       >
         {children}
       </div>

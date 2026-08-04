@@ -23,9 +23,16 @@ export default function SettingsModal({
   const { t } = useL()
 
   return (
-    <Modal size="lg" className="rounded-2xl max-h-[85vh] flex flex-col p-0">
+    <Modal
+      size="lg"
+      onClose={onClose}
+      labelledBy="settings-title"
+      className="max-h-[85vh] flex flex-col p-0"
+    >
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-xl font-bold">{t('nav.syncSettings')}</h2>
+        <h2 id="settings-title" className="text-xl font-bold">
+          {t('nav.syncSettings')}
+        </h2>
         <button
           onClick={onClose}
           className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"

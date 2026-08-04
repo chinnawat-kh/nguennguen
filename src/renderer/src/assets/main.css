@@ -46,24 +46,186 @@
 }
 
 :root {
-  --color-bg: #fdfbf7;
-  --color-text: #4a4a4a;
+  --color-bg: #f3f5f7;
+  --color-text: #18202f;
   --color-surface: #ffffff;
+  --radius-card: 1.25rem;
+  --focus-ring: #0f766e;
 }
 
 .dark {
-  --color-bg: #1e1e24;
-  --color-text: #f0f0f0;
-  --color-surface: #2b2b36;
+  --color-bg: #0b1018;
+  --color-text: #e8edf7;
+  --color-surface: #131b26;
 }
 
 body {
   background-color: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-sans);
+  letter-spacing: -0.006em;
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
+}
+
+button,
+input,
+select,
+textarea {
+  outline-color: var(--focus-ring);
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.field-error {
+  margin-top: 0.375rem;
+  color: #e11d48;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.surface-card {
+  background: var(--color-surface);
+  border: 1px solid rgb(226 232 240 / 0.85);
+  border-radius: 1.25rem;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.035);
+}
+.dark .surface-card {
+  border-color: rgb(51 65 85 / 0.7);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.18);
+}
+.surface-card-interactive {
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+.surface-card-interactive:hover {
+  border-color: rgb(148 163 184 / 0.75);
+  box-shadow: 0 4px 12px rgb(15 23 42 / 0.06);
+}
+.button-primary {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.8rem;
+  background: #111827;
+  padding: 0.625rem 1rem;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 650;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.1);
+  transition:
+    background-color 150ms,
+    box-shadow 150ms;
+}
+.button-primary:hover {
+  background: #334155;
+  box-shadow: 0 2px 5px rgb(15 23 42 / 0.12);
+}
+.dark .button-primary {
+  background: #f8fafc;
+  color: #0f172a;
+}
+.dark .button-primary:hover {
+  background: #e2e8f0;
+}
+.button-quiet {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.8rem;
+  padding: 0.625rem 1rem;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 650;
+  transition: background-color 150ms;
+}
+.button-quiet:hover {
+  background: #f1f5f9;
+}
+.dark .button-quiet:hover {
+  background: rgb(255 255 255 / 0.06);
+}
+.control {
+  min-height: 2.5rem;
+  border: 1px solid rgb(203 213 225 / 0.9);
+  border-radius: 0.75rem;
+  color: inherit;
+}
+.dark .control {
+  border-color: rgb(255 255 255 / 0.1);
+}
+.hero-balance {
+  background:
+    radial-gradient(circle at 85% 15%, rgb(45 212 191 / 0.22), transparent 32%),
+    linear-gradient(135deg, #111827 0%, #172554 100%);
+  box-shadow: 0 18px 45px rgb(15 23 42 / 0.18);
+}
+.dark .hero-balance {
+  background:
+    radial-gradient(circle at 85% 15%, rgb(45 212 191 / 0.17), transparent 32%),
+    linear-gradient(135deg, #172033 0%, #172554 100%);
+  box-shadow: 0 18px 50px rgb(0 0 0 / 0.28);
+}
+.button-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+  box-shadow: none;
+}
+.icon-button {
+  display: inline-flex;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.625rem;
+  transition:
+    background-color 150ms,
+    color 150ms;
+}
+.icon-button:hover {
+  background: rgb(243 244 246);
+}
+.dark .icon-button:hover {
+  background: rgb(55 65 81);
+}
+.skeleton {
+  border-radius: var(--radius-card);
+  background: linear-gradient(
+    90deg,
+    rgb(229 231 235) 25%,
+    rgb(243 244 246) 50%,
+    rgb(229 231 235) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton 1.4s infinite;
+}
+.dark .skeleton {
+  background: linear-gradient(90deg, rgb(31 41 55) 25%, rgb(55 65 81) 50%, rgb(31 41 55) 75%);
+  background-size: 200% 100%;
+}
+@keyframes skeleton {
+  to {
+    background-position: -200% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .titlebar {

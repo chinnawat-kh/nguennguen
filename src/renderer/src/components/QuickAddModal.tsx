@@ -1,9 +1,10 @@
-import { type JSX } from 'react'
+import { useState, type JSX } from 'react'
 import Modal from './Modal'
 import TransactionForm, { type TransactionFormData } from './TransactionForm'
 import { useL } from '../i18n'
 import { type Category } from '../types'
 import { getCurrentDay } from '../dateUtils'
+import { useToast } from './toastContext'
 
 interface QuickAddModalProps {
   initialType: 'income' | 'expense'
@@ -19,6 +20,13 @@ export default function QuickAddModal({
   onSuccess
 }: QuickAddModalProps): JSX.Element {
   const { t } = useL()
+  const { showToast } = useToast()
+  const [isDirty, setIsDirty] = useState(false)
+
+  const requestClose = (): void => {
+    if (isDirty && !window.confirm(t('transactions.discardChanges'))) return
+    onClose()
+  }
 
   const handleSubmit = async (data: TransactionFormData): Promise<void> => {
     await window.api.addTransaction({
@@ -30,11 +38,14 @@ export default function QuickAddModal({
     })
     onSuccess()
     onClose()
+    showToast(t('common.saved'), 'success')
   }
 
   return (
-    <Modal>
-      <h3 className="text-xl font-bold mb-4">{t('transactions.addModalTitle')}</h3>
+    <Modal onClose={requestClose} labelledBy="quick-add-title">
+      <h3 id="quick-add-title" className="text-xl font-bold mb-4">
+        {t('transactions.addModalTitle')}
+      </h3>
       <TransactionForm
         initialValues={{
           type: initialType,
@@ -45,7 +56,8 @@ export default function QuickAddModal({
         }}
         categories={categories}
         onSubmit={handleSubmit}
-        onCancel={onClose}
+        onCancel={requestClose}
+        onDirtyChange={setIsDirty}
       />
     </Modal>
   )

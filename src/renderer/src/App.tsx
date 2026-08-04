@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, type JSX } from 'react'
-import { Home, List, Tag } from 'lucide-react'
+import { Home, List, Tag, WalletCards } from 'lucide-react'
 import Dashboard from './components/Dashboard'
 import Transactions from './components/Transactions'
 import Categories from './components/Categories'
@@ -11,11 +11,14 @@ import SettingsModal from './components/SettingsModal'
 import { useL } from './i18n'
 import type { Transaction, Category, TabId } from './types'
 import { TAB_IDS } from './types'
-import { getCurrentMonth } from './dateUtils'
+import { filterByMode, getCurrentMonth } from './dateUtils'
+import { useToast } from './components/toastContext'
+import { formatCurrency } from './formatters'
+import logo from './assets/logo.png'
 
 interface NavItemProps {
   id: TabId
-  icon: React.ComponentType<{ size?: number }>
+  icon: React.ComponentType<{ size?: number; strokeWidth?: number }>
   label: string
   activeTab: TabId
   onClick: (id: TabId) => void
@@ -25,14 +28,15 @@ function NavItem({ id, icon: Icon, label, activeTab, onClick }: NavItemProps): J
   return (
     <button
       onClick={() => onClick(id)}
-      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+      aria-current={activeTab === id ? 'page' : undefined}
+      className={`group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
         activeTab === id
-          ? 'bg-teal-100 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 shadow-sm transform scale-105'
-          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:translate-x-1'
+          ? 'bg-white text-slate-950 shadow-sm dark:bg-white/10 dark:text-white'
+          : 'text-slate-500 hover:bg-white/60 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white'
       }`}
     >
-      <Icon size={20} />
-      <span className="font-medium">{label}</span>
+      <Icon size={18} strokeWidth={activeTab === id ? 2.4 : 1.8} />
+      <span className="font-semibold">{label}</span>
     </button>
   )
 }
@@ -41,18 +45,20 @@ const STORAGE_KEY = 'nguennguen-lang'
 
 export default function App(): JSX.Element {
   const [firstRun, setFirstRun] = useState<boolean>(() => !localStorage.getItem(STORAGE_KEY))
-  const [activeTab, setActiveTab] = useState<TabId>(TAB_IDS.DASHBOARD)
+  const [activeTab, setActiveTab] = useState<TabId>(
+    () => (localStorage.getItem('nguennguen-tab') as TabId) || TAB_IDS.DASHBOARD
+  )
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('nguennguen-dark') === 'true')
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [budget, setBudget] = useState<number>(0)
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showQuickAddModal, setShowQuickAddModal] = useState(false)
   const [quickAddType, setQuickAddType] = useState<'income' | 'expense'>('expense')
   const [appVersion, setAppVersion] = useState('')
-  const [errorMessage, setErrorMessage] = useState('')
+  const [loading, setLoading] = useState(true)
   const { t, lang, setLang } = useL()
+  const { showToast } = useToast()
 
   useEffect(() => {
     localStorage.setItem('nguennguen-dark', String(darkMode))
@@ -73,18 +79,13 @@ export default function App(): JSX.Element {
       const b = await window.api.getBudget(currentMonth)
       if (b) setBudget(b.amount)
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to load data')
+      showToast(error instanceof Error ? error.message : 'Unable to load data', 'error')
+    } finally {
+      setLoading(false)
     }
-  }, [])
+  }, [showToast])
 
-  useEffect(() => {
-    const onUnhandled = (event: PromiseRejectionEvent): void => {
-      event.preventDefault()
-      setErrorMessage(event.reason instanceof Error ? event.reason.message : String(event.reason))
-    }
-    window.addEventListener('unhandledrejection', onUnhandled)
-    return () => window.removeEventListener('unhandledrejection', onUnhandled)
-  }, [])
+  useEffect(() => localStorage.setItem('nguennguen-tab', activeTab), [activeTab])
 
   useEffect(() => {
     const init = async (): Promise<void> => {
@@ -94,13 +95,16 @@ export default function App(): JSX.Element {
     window.api.getAppVersion().then(setAppVersion)
   }, [loadData])
 
-  const totalIncome = transactions
-    .filter((tx) => tx.type === 'income')
-    .reduce((sum, tx) => sum + tx.amount, 0)
-  const totalExpense = transactions
-    .filter((tx) => tx.type === 'expense')
-    .reduce((sum, tx) => sum + tx.amount, 0)
-  const balance = totalIncome - totalExpense
+  const calculateBalance = (items: Transaction[]): number =>
+    items.reduce((sum, transaction) => {
+      return sum + (transaction.type === 'income' ? transaction.amount : -transaction.amount)
+    }, 0)
+  const monthlyTransactions = filterByMode(transactions, 'monthly')
+  const monthlyBalance = calculateBalance(monthlyTransactions)
+  const monthlyExpense = monthlyTransactions
+    .filter((transaction) => transaction.type === 'expense')
+    .reduce((sum, transaction) => sum + transaction.amount, 0)
+  const monthlyBudgetPercent = budget > 0 ? Math.round((monthlyExpense / budget) * 100) : 0
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
@@ -112,102 +116,124 @@ export default function App(): JSX.Element {
           onToggleLang={() => setLang(lang === 'en' ? 'th' : 'en')}
           darkMode={darkMode}
           onToggleDark={() => setDarkMode(!darkMode)}
-          onToggleSidebar={() => setIsSidebarOpen(true)}
           onOpenSettings={() => setShowSettings(true)}
         />
       )}
-      <div className="flex-1 flex overflow-hidden bg-gray-50 dark:bg-[#121212] text-gray-800 dark:text-gray-100 font-sans transition-colors duration-300">
-        {errorMessage && (
-          <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[100] max-w-lg rounded-lg bg-rose-600 px-4 py-3 text-sm text-white shadow-xl">
-            <button
-              className="mr-3 font-bold"
-              onClick={() => setErrorMessage('')}
-              aria-label="Dismiss"
-            >
-              ×
-            </button>
-            {errorMessage}
-          </div>
-        )}
+      <div className="flex flex-1 overflow-hidden bg-[#f3f5f7] font-sans text-slate-800 transition-colors duration-300 dark:bg-[#0b1018] dark:text-slate-100">
         {firstRun ? (
           <SetupWizard onDone={() => setFirstRun(false)} />
         ) : (
           <>
-            {/* Mobile Sidebar Overlay */}
-            {isSidebarOpen && (
-              <div
-                className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 md:hidden transition-opacity"
-                onClick={() => setIsSidebarOpen(false)}
-              />
-            )}
-
-            {/* Sidebar */}
-            <div
-              className={`fixed md:relative z-50 h-full w-56 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-r border-gray-200/50 dark:border-gray-700/50 flex flex-col transition-transform duration-300 ease-in-out transform ${
-                isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-              }`}
-            >
-              <nav className="flex-1 px-3 pt-3 space-y-1.5 overflow-y-auto">
+            <aside className="hidden w-56 flex-shrink-0 flex-col border-r border-slate-200/70 bg-slate-100/70 px-3 py-5 dark:border-white/8 dark:bg-[#0e151f] md:flex">
+              <div className="mb-7 flex items-center gap-3 px-2">
+                <div className="grid h-10 w-10 place-items-center rounded-xl bg-slate-950 shadow-sm dark:bg-white">
+                  <img src={logo} alt="" className="h-7 w-7" />
+                </div>
+                <div>
+                  <p className="text-sm font-extrabold tracking-tight text-slate-950 dark:text-white">
+                    {t('app.name')}
+                  </p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                    Finance space
+                  </p>
+                </div>
+              </div>
+              <nav className="flex-1 space-y-1 overflow-y-auto">
                 <NavItem
                   id={TAB_IDS.DASHBOARD}
                   icon={Home}
                   label={t('nav.dashboard')}
                   activeTab={activeTab}
-                  onClick={() => {
-                    setActiveTab(TAB_IDS.DASHBOARD)
-                    setIsSidebarOpen(false)
-                  }}
+                  onClick={setActiveTab}
                 />
                 <NavItem
                   id={TAB_IDS.TRANSACTIONS}
                   icon={List}
                   label={t('nav.transactions')}
                   activeTab={activeTab}
-                  onClick={() => {
-                    setActiveTab(TAB_IDS.TRANSACTIONS)
-                    setIsSidebarOpen(false)
-                  }}
+                  onClick={setActiveTab}
                 />
                 <NavItem
                   id={TAB_IDS.CATEGORIES}
                   icon={Tag}
                   label={t('nav.categories')}
                   activeTab={activeTab}
-                  onClick={() => {
-                    setActiveTab(TAB_IDS.CATEGORIES)
-                    setIsSidebarOpen(false)
-                  }}
+                  onClick={setActiveTab}
                 />
               </nav>
 
               {/* Balance */}
-              <div className="mx-3 mb-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/30">
-                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium mb-1">
-                  {t('dashboard.balanceLabel')}
-                </p>
-                <p
-                  className={`text-xl font-bold ${balance >= 0 ? 'text-teal-500' : 'text-rose-500'}`}
-                >
-                  ฿{balance.toLocaleString()}
-                </p>
+              <div className="rounded-2xl bg-slate-950 p-4 text-white dark:bg-white dark:text-slate-950">
+                <div className="mb-4 flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 dark:bg-slate-950/10">
+                    <WalletCards size={16} />
+                  </div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    {t('dashboard.balanceLabel')}
+                  </p>
+                </div>
+                <div>
+                  <p className="mb-0.5 text-[10px] font-medium text-slate-400">
+                    {t('dashboard.thisMonth')}
+                  </p>
+                  <p
+                    className={`text-xl font-extrabold tracking-tight tabular-nums ${monthlyBalance < 0 ? 'text-rose-400' : ''}`}
+                  >
+                    {formatCurrency(monthlyBalance, lang)}
+                  </p>
+                  <div className="mt-4 border-t border-white/10 pt-3 dark:border-slate-950/10">
+                    <div className="mb-2 flex items-center justify-between gap-2 text-[10px] font-semibold">
+                      <span className="text-slate-400">{t('dashboard.budgetUsed')}</span>
+                      <span className={monthlyBudgetPercent > 100 ? 'text-rose-400' : ''}>
+                        {budget > 0 ? `${monthlyBudgetPercent}%` : '—'}
+                      </span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-white/10 dark:bg-slate-950/10">
+                      <div
+                        className={`h-full rounded-full ${monthlyBudgetPercent > 100 ? 'bg-rose-400' : 'bg-emerald-400'}`}
+                        style={{ width: `${Math.min(100, monthlyBudgetPercent)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            </aside>
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-              <main className="flex-1 overflow-auto p-4 md:p-8 bg-gradient-to-br from-teal-50/50 to-emerald-50/50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
-                <div className="max-w-6xl mx-auto animate-fade-in">
-                  {activeTab === TAB_IDS.DASHBOARD && (
-                    <Dashboard transactions={transactions} budget={budget} setBudget={setBudget} />
+              <main className="flex-1 overflow-auto px-4 pb-24 pt-5 transition-colors duration-300 md:p-8 lg:p-10">
+                <div className="mx-auto max-w-7xl animate-fade-in">
+                  {loading ? (
+                    <div className="grid gap-4" aria-label="Loading">
+                      <div className="skeleton h-10 w-48" />
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <div className="skeleton h-36" />
+                        <div className="skeleton h-36" />
+                        <div className="skeleton h-36" />
+                      </div>
+                      <div className="skeleton h-80" />
+                    </div>
+                  ) : (
+                    activeTab === TAB_IDS.DASHBOARD && (
+                      <Dashboard
+                        transactions={transactions}
+                        budget={budget}
+                        setBudget={setBudget}
+                        onAddExpense={() => {
+                          setQuickAddType('expense')
+                          setShowQuickAddModal(true)
+                        }}
+                      />
+                    )
                   )}
-                  {activeTab === TAB_IDS.TRANSACTIONS && (
+                  {!loading && activeTab === TAB_IDS.TRANSACTIONS && (
                     <Transactions
                       transactions={transactions}
                       categories={categories}
                       onRefresh={loadData}
                     />
                   )}
-                  {activeTab === TAB_IDS.CATEGORIES && (
+                  {!loading && activeTab === TAB_IDS.CATEGORIES && (
                     <Categories categories={categories} onRefresh={loadData} />
                   )}
                 </div>
@@ -223,6 +249,34 @@ export default function App(): JSX.Element {
                   setShowQuickAddModal(true)
                 }}
               />
+              <nav className="fixed inset-x-3 bottom-3 z-30 grid grid-cols-3 rounded-2xl border border-white/70 bg-white/90 p-1.5 shadow-[0_12px_40px_rgba(15,23,42,0.16)] backdrop-blur-xl dark:border-white/10 dark:bg-[#151d29]/90 md:hidden">
+                {[
+                  [TAB_IDS.DASHBOARD, Home, t('nav.dashboard')],
+                  [TAB_IDS.TRANSACTIONS, List, t('nav.transactions')],
+                  [TAB_IDS.CATEGORIES, Tag, t('nav.categories')]
+                ].map(([id, Icon, label]) => {
+                  const tabId = id as TabId
+                  const NavIcon = Icon as React.ComponentType<{
+                    size?: number
+                    strokeWidth?: number
+                  }>
+                  return (
+                    <button
+                      key={tabId}
+                      onClick={() => setActiveTab(tabId)}
+                      aria-current={activeTab === tabId ? 'page' : undefined}
+                      className={`flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-[10px] font-semibold ${
+                        activeTab === tabId
+                          ? 'bg-slate-950 text-white dark:bg-white dark:text-slate-950'
+                          : 'text-slate-500 dark:text-slate-400'
+                      }`}
+                    >
+                      <NavIcon size={18} strokeWidth={activeTab === tabId ? 2.4 : 1.8} />
+                      <span className="truncate">{label as string}</span>
+                    </button>
+                  )
+                })}
+              </nav>
             </div>
           </>
         )}

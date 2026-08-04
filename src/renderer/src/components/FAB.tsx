@@ -12,7 +12,7 @@ export default function FAB({ onAddIncome, onAddExpense }: FABProps): JSX.Elemen
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="fixed bottom-8 right-8 z-40 flex flex-col items-end gap-3">
+    <div className="fixed bottom-24 right-5 z-40 flex flex-col items-end gap-3 md:bottom-7 md:right-7">
       {open && (
         <div className="flex flex-col items-stretch gap-2 animate-fade-in">
           <button
@@ -20,7 +20,7 @@ export default function FAB({ onAddIncome, onAddExpense }: FABProps): JSX.Elemen
               setOpen(false)
               onAddExpense()
             }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl shadow-lg text-sm font-medium transition-all duration-300 hover:-translate-y-0.5"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-rose-600 dark:text-rose-300 rounded-xl shadow-md text-sm font-semibold transition-colors hover:bg-slate-50 dark:hover:bg-slate-700"
           >
             <Plus size={16} />
             {t('nav.quickExpense')}
@@ -30,7 +30,7 @@ export default function FAB({ onAddIncome, onAddExpense }: FABProps): JSX.Elemen
               setOpen(false)
               onAddIncome()
             }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl shadow-lg text-sm font-medium transition-all duration-300 hover:-translate-y-0.5"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-emerald-600 dark:text-emerald-300 rounded-xl shadow-md text-sm font-semibold transition-colors hover:bg-slate-50 dark:hover:bg-slate-700"
           >
             <Plus size={16} />
             {t('nav.quickIncome')}
@@ -39,7 +39,7 @@ export default function FAB({ onAddIncome, onAddExpense }: FABProps): JSX.Elemen
       )}
       <button
         onClick={() => setOpen((v) => !v)}
-        className={`w-14 h-14 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center ${
+        className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-lg transition-colors duration-150 hover:bg-slate-700 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200 ${
           open ? 'rotate-45' : ''
         }`}
       >

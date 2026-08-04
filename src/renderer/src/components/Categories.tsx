@@ -3,6 +3,7 @@ import { Plus, Trash2, Edit2, Check, X } from 'lucide-react'
 import Modal from './Modal'
 import { useL } from '../i18n'
 import { type Category } from '../types'
+import { useToast } from './toastContext'
 
 interface CategoriesProps {
   categories: Category[]
@@ -23,6 +24,7 @@ const pastelColors = [
 
 export default function Categories({ categories, onRefresh }: CategoriesProps): JSX.Element {
   const { t } = useL()
+  const { showToast } = useToast()
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
@@ -49,6 +51,7 @@ export default function Categories({ categories, onRefresh }: CategoriesProps): 
     setShowAddModal(false)
     setFormData({ name: '', type: 'expense', icon: 'Tag', color: defaultColor })
     onRefresh()
+    showToast(t('common.saved'), 'success')
   }
 
   const handleUpdate = async (e: React.FormEvent): Promise<void> => {
@@ -57,28 +60,136 @@ export default function Categories({ categories, onRefresh }: CategoriesProps): 
     await window.api.updateCategory(editData)
     setEditingId(null)
     onRefresh()
+    showToast(t('common.saved'), 'success')
   }
 
   const handleDelete = async (id: number): Promise<void> => {
     await window.api.deleteCategory(id)
     setConfirmDeleteId(null)
     onRefresh()
+    showToast(t('common.deleted'), 'success')
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{t('categories.title')}</h2>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center space-x-2 bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg transition-colors"
-        >
+    <div className="space-y-5">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+            {t('nav.categories')}
+          </p>
+          <h2 className="text-2xl font-extrabold tracking-[-0.035em] text-slate-950 dark:text-white md:text-3xl">
+            {t('categories.title')}
+          </h2>
+        </div>
+        <button onClick={() => setShowAddModal(true)} className="button-primary">
           <Plus size={20} />
           <span className="hidden md:inline">{t('categories.addNew')}</span>
         </button>
       </div>
 
-      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50 overflow-hidden transition-all duration-300">
+      <div className="space-y-3 md:hidden">
+        {categories.length === 0 ? (
+          <div className="surface-card p-8 text-center text-sm text-slate-400">
+            {t('common.noData')}
+          </div>
+        ) : (
+          categories.map((category) => (
+            <div key={category.id} className="surface-card p-4">
+              {editingId === category.id ? (
+                <form onSubmit={handleUpdate} className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={editData.color}
+                      onChange={(event) => setEditData({ ...editData, color: event.target.value })}
+                      className="h-10 w-10 shrink-0 cursor-pointer rounded-lg"
+                    />
+                    <input
+                      type="text"
+                      value={editData.name}
+                      onChange={(event) => setEditData({ ...editData, name: event.target.value })}
+                      className="control min-w-0 flex-1 bg-white px-3 py-2 dark:bg-slate-800"
+                      required
+                    />
+                  </div>
+                  <select
+                    value={editData.type}
+                    onChange={(event) =>
+                      setEditData({
+                        ...editData,
+                        type: event.target.value as 'income' | 'expense'
+                      })
+                    }
+                    className="control w-full bg-white px-3 py-2 dark:bg-slate-800"
+                  >
+                    <option value="expense">{t('common.expense')}</option>
+                    <option value="income">{t('common.income')}</option>
+                  </select>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditingId(null)}
+                      className="button-quiet"
+                    >
+                      {t('common.cancel')}
+                    </button>
+                    <button type="submit" className="button-primary">
+                      {t('common.save')}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <span
+                    className="h-11 w-11 shrink-0 rounded-xl"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-bold text-slate-900 dark:text-white">
+                      {category.name}
+                    </p>
+                    <p
+                      className={`text-xs font-semibold ${category.type === 'income' ? 'text-emerald-600' : 'text-rose-500'}`}
+                    >
+                      {category.type === 'income' ? t('common.income') : t('common.expense')}
+                    </p>
+                  </div>
+                  {confirmDeleteId === category.id ? (
+                    <div className="flex items-center gap-2 text-xs font-semibold">
+                      <button onClick={() => handleDelete(category.id)} className="text-rose-600">
+                        {t('common.confirm')}
+                      </button>
+                      <button onClick={() => setConfirmDeleteId(null)} className="text-slate-500">
+                        {t('common.cancel')}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => {
+                          setEditingId(category.id)
+                          setEditData(category)
+                        }}
+                        className="icon-button text-slate-500"
+                      >
+                        <Edit2 size={17} />
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(category.id)}
+                        className="icon-button text-rose-500"
+                      >
+                        <Trash2 size={17} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="surface-card hidden overflow-hidden md:block">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200/50 dark:divide-gray-700/50">
             <thead className="bg-gray-50 dark:bg-gray-800/50">
@@ -230,8 +341,10 @@ export default function Categories({ categories, onRefresh }: CategoriesProps): 
       </div>
 
       {showAddModal && (
-        <Modal>
-          <h3 className="text-xl font-bold mb-4">{t('categories.addModalTitle')}</h3>
+        <Modal onClose={() => setShowAddModal(false)} labelledBy="category-modal-title">
+          <h3 id="category-modal-title" className="text-xl font-bold mb-4">
+            {t('categories.addModalTitle')}
+          </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">{t('categories.typeLabel')}</label>
@@ -272,6 +385,7 @@ export default function Categories({ categories, onRefresh }: CategoriesProps): 
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder={t('categories.namePlaceholder')}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none"
               />
             </div>

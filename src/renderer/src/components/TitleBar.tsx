@@ -1,5 +1,5 @@
 import { useState, useEffect, type JSX } from 'react'
-import { Minus, Maximize2, Minimize2, X, Globe, Sun, Moon, Menu, Settings } from 'lucide-react'
+import { Minus, Maximize2, Minimize2, X, Globe, Sun, Moon, Settings } from 'lucide-react'
 import { useL } from '../i18n'
 import logo from '../assets/logo.png'
 
@@ -9,7 +9,6 @@ interface TitleBarProps {
   onToggleLang?: () => void
   darkMode?: boolean
   onToggleDark?: () => void
-  onToggleSidebar?: () => void
   onOpenSettings?: () => void
 }
 
@@ -19,7 +18,6 @@ export default function TitleBar({
   onToggleLang,
   darkMode,
   onToggleDark,
-  onToggleSidebar,
   onOpenSettings
 }: TitleBarProps): JSX.Element {
   const { t } = useL()
@@ -33,19 +31,13 @@ export default function TitleBar({
 
   return (
     <div
-      className="titlebar h-10 flex-shrink-0 flex items-center bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 select-none"
+      className="titlebar h-11 flex-shrink-0 flex items-center bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 select-none"
       onDoubleClick={() => window.api.windowMaximize()}
     >
       {!minimal ? (
         <div className="flex items-center gap-2 pl-3">
-          <button
-            className="titlebar-btn md:hidden p-1.5 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            onClick={onToggleSidebar}
-          >
-            <Menu size={16} />
-          </button>
-          <img src={logo} alt="" className="w-5 h-5" />
-          <span className="text-sm font-bold bg-gradient-to-r from-teal-500 to-emerald-400 bg-clip-text text-transparent">
+          <img src={logo} alt="" className="w-6 h-6" />
+          <span className="text-sm font-extrabold tracking-tight text-slate-800 dark:text-white">
             {t('app.name')}
           </span>
         </div>

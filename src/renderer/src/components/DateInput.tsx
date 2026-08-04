@@ -47,7 +47,7 @@ export default function DateInput({
   }
 
   return (
-    <div className="relative">
+    <div className="relative min-w-0 w-full">
       <input
         type="text"
         value={display}
@@ -55,14 +55,15 @@ export default function DateInput({
         onFocus={handleFocus}
         onBlur={handleBlur}
         placeholder={t('common.dateFormat')}
-        className={`${className} pr-9`}
+        className={`${className} w-full min-w-0 pr-11`}
       />
       <button
         type="button"
         onClick={openPicker}
-        className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-pointer"
+        className="absolute inset-y-0 right-0 flex w-10 shrink-0 cursor-pointer items-center justify-center rounded-r-xl border-l border-slate-200/80 text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700 dark:border-white/10 dark:hover:bg-white/5 dark:hover:text-slate-200"
+        aria-label={t('common.dateFormat')}
       >
-        <Calendar size={16} />
+        <Calendar size={17} strokeWidth={1.8} />
       </button>
       <input
         ref={hiddenRef}
