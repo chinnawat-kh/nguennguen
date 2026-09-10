@@ -68,6 +68,7 @@ export default function TitleBar({
             <button
               className="titlebar-btn px-2.5 h-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
               onClick={onOpenSettings}
+              aria-label={t('nav.syncSettings')}
             >
               <Settings size={14} />
             </button>

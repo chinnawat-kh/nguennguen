@@ -1,7 +1,7 @@
 import { useRef, useState, type JSX } from 'react'
 import { Calendar } from 'lucide-react'
 import { useL } from '../i18n'
-import { formatDisplayDate, parseDisplayDate } from '../dateUtils'
+import { formatDisplayDate, isValidISODate, parseDisplayDate } from '../dateUtils'
 
 interface DateInputProps {
   value: string
@@ -29,13 +29,12 @@ export default function DateInput({
   const handleBlur = (): void => {
     setIsFocused(false)
     const parsed = parseDisplayDate(editValue)
-    if (parsed !== editValue) {
-      onChange(parsed)
-    }
+    onChange(parsed)
   }
 
   const handleDisplayChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setEditValue(e.target.value)
+    onChange(parseDisplayDate(e.target.value))
   }
 
   const handleNativeChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -55,6 +54,8 @@ export default function DateInput({
         onFocus={handleFocus}
         onBlur={handleBlur}
         placeholder={t('common.dateFormat')}
+        aria-label={t('transactions.dateLabel')}
+        aria-invalid={!!value && !isValidISODate(value)}
         className={`${className} w-full min-w-0 pr-11`}
       />
       <button
@@ -68,8 +69,10 @@ export default function DateInput({
       <input
         ref={hiddenRef}
         type="date"
-        value={value}
+        value={isValidISODate(value) ? value : ''}
         onChange={handleNativeChange}
+        tabIndex={-1}
+        aria-hidden="true"
         className="sr-only"
       />
     </div>

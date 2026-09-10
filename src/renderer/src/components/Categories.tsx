@@ -28,6 +28,28 @@ export default function Categories({ categories, onRefresh }: CategoriesProps): 
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  const closeAdd = (): void => {
+    if (saving) return
+    const dirty =
+      formData.name !== '' || formData.type !== 'expense' || formData.color !== defaultColor
+    if (dirty && !window.confirm(t('transactions.discardChanges'))) return
+    setShowAddModal(false)
+    setFormData({ name: '', type: 'expense', icon: 'Tag', color: defaultColor })
+  }
+
+  const cancelEdit = (): void => {
+    if (saving) return
+    const original = categories.find((category) => category.id === editingId)
+    if (
+      original &&
+      JSON.stringify(original) !== JSON.stringify(editData) &&
+      !window.confirm(t('transactions.discardChanges'))
+    )
+      return
+    setEditingId(null)
+  }
 
   const [formData, setFormData] = useState({
     name: '',
@@ -46,21 +68,35 @@ export default function Categories({ categories, onRefresh }: CategoriesProps): 
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
-    if (!formData.name) return
-    await window.api.addCategory(formData)
-    setShowAddModal(false)
-    setFormData({ name: '', type: 'expense', icon: 'Tag', color: defaultColor })
-    onRefresh()
-    showToast(t('common.saved'), 'success')
+    if (saving || !formData.name.trim()) return
+    setSaving(true)
+    try {
+      await window.api.addCategory({ ...formData, name: formData.name.trim() })
+      setShowAddModal(false)
+      setFormData({ name: '', type: 'expense', icon: 'Tag', color: defaultColor })
+      onRefresh()
+      showToast(t('common.saved'), 'success')
+    } catch {
+      showToast(t('common.saveFailed'), 'error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleUpdate = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
-    if (!editData.name) return
-    await window.api.updateCategory(editData)
-    setEditingId(null)
-    onRefresh()
-    showToast(t('common.saved'), 'success')
+    if (saving || !editData.name.trim()) return
+    setSaving(true)
+    try {
+      await window.api.updateCategory({ ...editData, name: editData.name.trim() })
+      setEditingId(null)
+      onRefresh()
+      showToast(t('common.saved'), 'success')
+    } catch {
+      showToast(t('common.saveFailed'), 'error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleDelete = async (id: number): Promise<void> => {
@@ -97,46 +133,46 @@ export default function Categories({ categories, onRefresh }: CategoriesProps): 
             <div key={category.id} className="surface-card p-4">
               {editingId === category.id ? (
                 <form onSubmit={handleUpdate} className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      value={editData.color}
-                      onChange={(event) => setEditData({ ...editData, color: event.target.value })}
-                      className="h-10 w-10 shrink-0 cursor-pointer rounded-lg"
-                    />
-                    <input
-                      type="text"
-                      value={editData.name}
-                      onChange={(event) => setEditData({ ...editData, name: event.target.value })}
-                      className="control min-w-0 flex-1 bg-white px-3 py-2 dark:bg-slate-800"
-                      required
-                    />
-                  </div>
-                  <select
-                    value={editData.type}
-                    onChange={(event) =>
-                      setEditData({
-                        ...editData,
-                        type: event.target.value as 'income' | 'expense'
-                      })
-                    }
-                    className="control w-full bg-white px-3 py-2 dark:bg-slate-800"
-                  >
-                    <option value="expense">{t('common.expense')}</option>
-                    <option value="income">{t('common.income')}</option>
-                  </select>
-                  <div className="flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setEditingId(null)}
-                      className="button-quiet"
+                  <fieldset disabled={saving} className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={editData.color}
+                        onChange={(event) =>
+                          setEditData({ ...editData, color: event.target.value })
+                        }
+                        className="h-10 w-10 shrink-0 cursor-pointer rounded-lg"
+                      />
+                      <input
+                        type="text"
+                        value={editData.name}
+                        onChange={(event) => setEditData({ ...editData, name: event.target.value })}
+                        className="control min-w-0 flex-1 bg-white px-3 py-2 dark:bg-slate-800"
+                        required
+                      />
+                    </div>
+                    <select
+                      value={editData.type}
+                      onChange={(event) =>
+                        setEditData({
+                          ...editData,
+                          type: event.target.value as 'income' | 'expense'
+                        })
+                      }
+                      className="control w-full bg-white px-3 py-2 dark:bg-slate-800"
                     >
-                      {t('common.cancel')}
-                    </button>
-                    <button type="submit" className="button-primary">
-                      {t('common.save')}
-                    </button>
-                  </div>
+                      <option value="expense">{t('common.expense')}</option>
+                      <option value="income">{t('common.income')}</option>
+                    </select>
+                    <div className="flex justify-end gap-2">
+                      <button type="button" onClick={cancelEdit} className="button-quiet">
+                        {t('common.cancel')}
+                      </button>
+                      <button type="submit" className="button-primary">
+                        {t('common.save')}
+                      </button>
+                    </div>
+                  </fieldset>
                 </form>
               ) : (
                 <div className="flex items-center gap-3">
@@ -239,42 +275,47 @@ export default function Categories({ categories, onRefresh }: CategoriesProps): 
                     {editingId === c.id ? (
                       <td colSpan={4} className="px-6 py-4">
                         <form onSubmit={handleUpdate} className="flex items-center space-x-4">
-                          <input
-                            type="color"
-                            value={editData.color}
-                            onChange={(e) => setEditData({ ...editData, color: e.target.value })}
-                            className="h-8 w-8 rounded cursor-pointer"
-                          />
-                          <input
-                            type="text"
-                            value={editData.name}
-                            onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                            className="px-3 py-1 border rounded bg-white dark:bg-gray-700 flex-1"
-                            required
-                          />
-                          <select
-                            value={editData.type}
-                            onChange={(e) =>
-                              setEditData({
-                                ...editData,
-                                type: e.target.value as 'income' | 'expense'
-                              })
-                            }
-                            className="px-3 py-1 border rounded bg-white dark:bg-gray-700"
+                          <fieldset
+                            disabled={saving}
+                            className="flex items-center space-x-4 w-full"
                           >
-                            <option value="expense">{t('common.expense')}</option>
-                            <option value="income">{t('common.income')}</option>
-                          </select>
-                          <button type="submit" className="text-green-600 p-1">
-                            <Check size={20} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEditingId(null)}
-                            className="text-gray-500 p-1"
-                          >
-                            <X size={20} />
-                          </button>
+                            <input
+                              type="color"
+                              value={editData.color}
+                              onChange={(e) => setEditData({ ...editData, color: e.target.value })}
+                              className="h-8 w-8 rounded cursor-pointer"
+                            />
+                            <input
+                              type="text"
+                              value={editData.name}
+                              onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                              className="px-3 py-1 border rounded bg-white dark:bg-gray-700 flex-1"
+                              required
+                            />
+                            <select
+                              value={editData.type}
+                              onChange={(e) =>
+                                setEditData({
+                                  ...editData,
+                                  type: e.target.value as 'income' | 'expense'
+                                })
+                              }
+                              className="px-3 py-1 border rounded bg-white dark:bg-gray-700"
+                            >
+                              <option value="expense">{t('common.expense')}</option>
+                              <option value="income">{t('common.income')}</option>
+                            </select>
+                            <button type="submit" className="text-green-600 p-1">
+                              <Check size={20} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={cancelEdit}
+                              className="text-gray-500 p-1"
+                            >
+                              <X size={20} />
+                            </button>
+                          </fieldset>
                         </form>
                       </td>
                     ) : (
@@ -341,91 +382,99 @@ export default function Categories({ categories, onRefresh }: CategoriesProps): 
       </div>
 
       {showAddModal && (
-        <Modal onClose={() => setShowAddModal(false)} labelledBy="category-modal-title">
+        <Modal onClose={closeAdd} labelledBy="category-modal-title">
           <h3 id="category-modal-title" className="text-xl font-bold mb-4">
             {t('categories.addModalTitle')}
           </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">{t('categories.typeLabel')}</label>
-              <div className="flex space-x-4">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="catType"
-                    value="expense"
-                    checked={formData.type === 'expense'}
-                    onChange={(e) =>
-                      setFormData({ ...formData, type: e.target.value as 'income' | 'expense' })
-                    }
-                    className="text-rose-500"
-                  />
-                  <span>{t('categories.expense')}</span>
+            <fieldset disabled={saving} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  {t('categories.typeLabel')}
                 </label>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="catType"
-                    value="income"
-                    checked={formData.type === 'income'}
-                    onChange={(e) =>
-                      setFormData({ ...formData, type: e.target.value as 'income' | 'expense' })
-                    }
-                    className="text-green-500"
-                  />
-                  <span>{t('categories.income')}</span>
-                </label>
+                <div className="flex space-x-4">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      name="catType"
+                      value="expense"
+                      checked={formData.type === 'expense'}
+                      onChange={(e) =>
+                        setFormData({ ...formData, type: e.target.value as 'income' | 'expense' })
+                      }
+                      className="text-rose-500"
+                    />
+                    <span>{t('categories.expense')}</span>
+                  </label>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      name="catType"
+                      value="income"
+                      checked={formData.type === 'income'}
+                      onChange={(e) =>
+                        setFormData({ ...formData, type: e.target.value as 'income' | 'expense' })
+                      }
+                      className="text-green-500"
+                    />
+                    <span>{t('categories.income')}</span>
+                  </label>
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">{t('categories.nameLabel')}</label>
-              <input
-                type="text"
-                required
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder={t('categories.namePlaceholder')}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">{t('categories.colorLabel')}</label>
-              <div className="flex flex-wrap gap-2">
-                {pastelColors.map((color) => (
-                  <button
-                    type="button"
-                    key={color}
-                    onClick={() => setFormData({ ...formData, color })}
-                    className={`w-8 h-8 rounded-full border-2 ${formData.color === color ? 'border-gray-900 dark:border-white' : 'border-transparent'}`}
-                    style={{ backgroundColor: color }}
-                  ></button>
-                ))}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  {t('categories.nameLabel')}
+                </label>
                 <input
-                  type="color"
-                  value={formData.color}
-                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                  className="w-8 h-8 rounded cursor-pointer"
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder={t('categories.namePlaceholder')}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none"
                 />
               </div>
-            </div>
 
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={() => setShowAddModal(false)}
-                className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                {t('common.cancel')}
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors"
-              >
-                {t('common.save')}
-              </button>
-            </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  {t('categories.colorLabel')}
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {pastelColors.map((color) => (
+                    <button
+                      type="button"
+                      key={color}
+                      onClick={() => setFormData({ ...formData, color })}
+                      className={`w-8 h-8 rounded-full border-2 ${formData.color === color ? 'border-gray-900 dark:border-white' : 'border-transparent'}`}
+                      style={{ backgroundColor: color }}
+                    ></button>
+                  ))}
+                  <input
+                    type="color"
+                    value={formData.color}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    className="w-8 h-8 rounded cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={closeAdd}
+                  className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors"
+                >
+                  {t('common.save')}
+                </button>
+              </div>
+            </fieldset>
           </form>
         </Modal>
       )}

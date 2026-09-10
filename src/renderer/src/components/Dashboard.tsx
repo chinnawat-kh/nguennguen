@@ -45,6 +45,8 @@ export default function Dashboard({
   const [filterMode, setFilterMode] = useState<FilterMode>('monthly')
   const [showBudgetModal, setShowBudgetModal] = useState(false)
   const [newBudget, setNewBudget] = useState(budget.toString())
+  const [savingBudget, setSavingBudget] = useState(false)
+  const [budgetError, setBudgetError] = useState('')
   const filteredTxs = useMemo(
     () => filterByMode(transactions, filterMode),
     [transactions, filterMode]
@@ -111,18 +113,32 @@ export default function Dashboard({
   }, [currentMonthIndex, currentYear, lang, transactions])
 
   const openBudgetModal = (): void => {
+    setBudgetError('')
     setNewBudget(budget.toString())
     setShowBudgetModal(true)
+  }
+
+  const closeBudgetModal = (): void => {
+    if (savingBudget) return
+    if (newBudget !== budget.toString() && !window.confirm(t('transactions.discardChanges'))) return
+    setShowBudgetModal(false)
   }
 
   const handleBudgetSubmit = async (event: React.FormEvent): Promise<void> => {
     event.preventDefault()
     const amount = Number(newBudget)
-    if (!Number.isNaN(amount)) {
+    if (savingBudget || !newBudget.trim() || !Number.isFinite(amount) || amount < 0) return
+    setSavingBudget(true)
+    setBudgetError('')
+    try {
       await window.api.setBudget({ month: getCurrentMonth(), amount })
       setBudget(amount)
       setShowBudgetModal(false)
       showToast(t('common.saved'), 'success')
+    } catch {
+      setBudgetError(t('common.saveFailed'))
+    } finally {
+      setSavingBudget(false)
     }
   }
 
@@ -205,7 +221,11 @@ export default function Dashboard({
                 <p className="mb-1 text-xs font-semibold text-slate-400">
                   {periodLabel[filterMode]}
                 </p>
-                <h3 className="text-lg font-bold">{t('dashboard.budgetTitle')}</h3>
+                <h3 className="text-lg font-bold">
+                  {t(
+                    filterMode === 'yearly' ? 'dashboard.yearlyEstimate' : 'dashboard.budgetTitle'
+                  )}
+                </h3>
               </div>
               <button
                 onClick={openBudgetModal}
@@ -234,15 +254,26 @@ export default function Dashboard({
                 {t('dashboard.budgetSource', { amount: formatCurrency(budget, lang) })}
               </p>
             )}
+            {filterMode === 'yearly' && (
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                {t('dashboard.yearlyEstimateHint')}
+              </p>
+            )}
           </div>
           {budget > 0 ? (
             <p className="mt-8 rounded-xl bg-slate-50 px-4 py-3 text-sm font-medium text-slate-500 dark:bg-white/5 dark:text-slate-400">
               {isOverBudget
                 ? t('dashboard.overBudget', {
-                    n: (totalExpense - periodBudget).toLocaleString()
+                    n: (totalExpense - periodBudget).toLocaleString(
+                      lang === 'th' ? 'th-TH' : 'en-US',
+                      { maximumFractionDigits: 2 }
+                    )
                   })
                 : t('dashboard.remainingBudget', {
-                    n: (periodBudget - totalExpense).toLocaleString()
+                    n: (periodBudget - totalExpense).toLocaleString(
+                      lang === 'th' ? 'th-TH' : 'en-US',
+                      { maximumFractionDigits: 2 }
+                    )
                   })}
             </p>
           ) : (
@@ -335,7 +366,7 @@ export default function Dashboard({
       </section>
 
       {showBudgetModal && (
-        <Modal size="sm" onClose={() => setShowBudgetModal(false)} labelledBy="budget-modal-title">
+        <Modal size="sm" onClose={closeBudgetModal} labelledBy="budget-modal-title">
           <h3 id="budget-modal-title" className="mb-4 text-xl font-bold">
             {t('dashboard.setBudgetModal')}
           </h3>
@@ -343,6 +374,11 @@ export default function Dashboard({
             {t('dashboard.budgetMonthlyHint')}
           </p>
           <form onSubmit={handleBudgetSubmit} className="space-y-4">
+            {budgetError && (
+              <p role="alert" className="field-error">
+                {budgetError}
+              </p>
+            )}
             <input
               type="number"
               min="0"
@@ -352,16 +388,18 @@ export default function Dashboard({
               className="control w-full bg-white px-3 py-2 dark:bg-slate-800"
               placeholder={t('common.placeholder')}
               required
+              disabled={savingBudget}
             />
             <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => setShowBudgetModal(false)}
+                onClick={closeBudgetModal}
                 className="button-quiet"
+                disabled={savingBudget}
               >
                 {t('common.cancel')}
               </button>
-              <button type="submit" className="button-primary">
+              <button type="submit" className="button-primary" disabled={savingBudget}>
                 {t('common.save')}
               </button>
             </div>

@@ -3,7 +3,8 @@ import { app } from 'electron'
 import { join } from 'path'
 import { randomUUID } from 'crypto'
 import { toSatang } from '../shared/money'
-import { migrateDatabase } from './migrations'
+import { migrateDatabase, SCHEMA_VERSION } from './migrations'
+import { mkdirSync } from 'node:fs'
 
 const userDataPath = app.getPath('userData')
 const dbPath = join(userDataPath, 'nguennguen.sqlite')
@@ -13,6 +14,18 @@ const db = new Database(dbPath)
 db.pragma('foreign_keys = ON')
 
 export function initDB(): void {
+  const version = db.pragma('user_version', { simple: true }) as number
+  const hasTables = db
+    .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'transactions'")
+    .get()
+  if (version > SCHEMA_VERSION) throw new Error('Database was created by a newer app version')
+  if (hasTables && version < SCHEMA_VERSION) {
+    const directory = join(userDataPath, 'backups')
+    mkdirSync(directory, { recursive: true })
+    db.prepare('VACUUM INTO ?').run(
+      join(directory, `before-migration-v${version}-${Date.now()}-${randomUUID()}.sqlite`)
+    )
+  }
   migrateDatabase(db)
 
   const count = db.prepare('SELECT count(*) as count FROM categories').get() as { count: number }

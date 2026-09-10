@@ -1,4 +1,5 @@
-import { type JSX } from 'react'
+import { useState, type JSX } from 'react'
+import BackupSection from './BackupSection'
 import { Download, X } from 'lucide-react'
 import Modal from './Modal'
 import SyncSection from './SyncSection'
@@ -21,11 +22,14 @@ export default function SettingsModal({
   onRefresh
 }: SettingsModalProps): JSX.Element {
   const { t } = useL()
+  const [backupBusy, setBackupBusy] = useState(false)
 
   return (
     <Modal
       size="lg"
-      onClose={onClose}
+      onClose={() => {
+        if (!backupBusy) onClose()
+      }}
       labelledBy="settings-title"
       className="max-h-[85vh] flex flex-col p-0"
     >
@@ -35,6 +39,7 @@ export default function SettingsModal({
         </h2>
         <button
           onClick={onClose}
+          disabled={backupBusy}
           className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         >
           <X size={20} />
@@ -42,6 +47,7 @@ export default function SettingsModal({
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-8">
+        <BackupSection onRefresh={onRefresh} onBusyChange={setBackupBusy} />
         <section>
           <h3 className={sectionHeader}>{t('export.sheetName')}</h3>
           <button

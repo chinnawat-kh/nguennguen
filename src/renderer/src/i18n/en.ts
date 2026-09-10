@@ -1,4 +1,14 @@
 export default {
+  backup: {
+    title: 'Local backup and restore',
+    description:
+      'Save transactions, categories and budgets in a JSON file. Restoring replaces local data after confirmation and creates a recovery copy first. Keep backups private. Cloud sync can merge cloud data back later.',
+    export: 'Save backup',
+    import: 'Restore backup',
+    saved: 'Backup saved: {{path}}',
+    restored: 'Data restored. Previous data saved at: {{path}}',
+    failed: 'Could not complete the operation. Check the backup format and file permissions.'
+  },
   app: {
     name: 'NguenNguen'
   },
@@ -13,6 +23,7 @@ export default {
     syncSettings: 'Sync Settings'
   },
   common: {
+    saveFailed: 'Could not save. Your entries are still here; please try again.',
     cancel: 'Cancel',
     save: 'Save',
     confirm: 'Confirm',
@@ -54,6 +65,9 @@ export default {
     start: 'Get Started'
   },
   dashboard: {
+    yearlyEstimate: 'Estimated annual budget',
+    yearlyEstimateHint:
+      'This month’s budget × 12. This is a projection, not the sum of saved monthly budgets.',
     allTime: 'All time',
     title: 'Dashboard',
     summary: 'Financial summary',
@@ -81,9 +95,12 @@ export default {
     lastSixMonths: 'Last 6 months',
     cashFlowTrend: 'Income and expense trend',
     budgetOverAlert: 'Alert!',
-    budgetOverMsg: 'You have exceeded your monthly budget.'
+    budgetOverMsg: 'You have exceeded the budget for the selected period.'
   },
   transactions: {
+    period: 'Period',
+    customRange: 'Custom date range',
+    invalidRange: 'Enter valid dates, with the start date on or before the end date.',
     discardChanges: 'Your changes have not been saved. Close this window anyway?',
     title: 'Transactions',
     addNew: 'Add new',

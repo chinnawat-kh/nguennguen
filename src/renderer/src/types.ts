@@ -8,6 +8,7 @@ export interface SyncPayload {
 }
 
 export type FilterMode = 'daily' | 'weekly' | 'monthly' | 'yearly'
+export type TransactionFilterMode = FilterMode | 'all' | 'custom'
 
 export const TAB_IDS = {
   DASHBOARD: 'dashboard',

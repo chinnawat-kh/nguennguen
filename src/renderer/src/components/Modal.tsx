@@ -22,6 +22,10 @@ export default function Modal({
   labelledBy
 }: ModalProps): JSX.Element {
   const dialogRef = useRef<HTMLDivElement>(null)
+  const closeRef = useRef(onClose)
+  useEffect(() => {
+    closeRef.current = onClose
+  }, [onClose])
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null
     const dialog = dialogRef.current
@@ -31,13 +35,16 @@ export default function Modal({
       )
       ?.focus()
     const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape' && onClose) onClose()
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        closeRef.current?.()
+      }
       if (event.key !== 'Tab' || !dialog) return
       const focusable = [
         ...dialog.querySelectorAll<HTMLElement>(
           'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
         )
-      ]
+      ].filter((element) => element.tabIndex !== -1 && element.getClientRects().length > 0)
       if (!focusable.length) return
       const first = focusable[0]
       const last = focusable[focusable.length - 1]
@@ -54,7 +61,7 @@ export default function Modal({
       document.removeEventListener('keydown', onKeyDown)
       previous?.focus()
     }
-  }, [onClose])
+  }, [])
   return (
     <div
       className="fixed inset-0 bg-black/55 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 animate-fade-in"
