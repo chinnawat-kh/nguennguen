@@ -22,8 +22,10 @@ export default function QuickAddModal({
   const { t } = useL()
   const { showToast } = useToast()
   const [isDirty, setIsDirty] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const requestClose = (): void => {
+    if (isSubmitting) return
     if (isDirty && !window.confirm(t('transactions.discardChanges'))) return
     onClose()
   }
@@ -58,6 +60,7 @@ export default function QuickAddModal({
         onSubmit={handleSubmit}
         onCancel={requestClose}
         onDirtyChange={setIsDirty}
+        onSubmittingChange={setIsSubmitting}
       />
     </Modal>
   )

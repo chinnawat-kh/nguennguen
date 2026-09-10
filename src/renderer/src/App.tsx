@@ -77,7 +77,7 @@ export default function App(): JSX.Element {
       setCategories(cats)
       const currentMonth = getCurrentMonth()
       const b = await window.api.getBudget(currentMonth)
-      if (b) setBudget(b.amount)
+      setBudget(b?.amount ?? 0)
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Unable to load data', 'error')
     } finally {

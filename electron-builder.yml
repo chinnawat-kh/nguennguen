@@ -3,6 +3,11 @@ productName: NguenNguen
 directories:
   buildResources: build
 files:
+  - '!tests/**'
+  - '!test-results/**'
+  - '!playwright-report/**'
+  - '!playwright.config.ts'
+  - '!docs/**'
   - '!**/.vscode/*'
   - '!src/*'
   - '!electron.vite.config.{js,ts,mjs,cjs}'

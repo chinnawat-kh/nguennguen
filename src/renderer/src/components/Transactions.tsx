@@ -5,19 +5,19 @@ import TransactionForm, { type TransactionFormData } from './TransactionForm'
 import TransactionFilters from './TransactionFilters'
 import TransactionTable from './TransactionTable'
 import { useL } from '../i18n'
-import { type Transaction, type Category, type FilterMode } from '../types'
-import { filterByMode, getCurrentDay } from '../dateUtils'
+import { type Transaction, type Category, type TransactionFilterMode } from '../types'
+import { filterTransactionDates, getCurrentDay } from '../dateUtils'
 import { useToast } from './toastContext'
 
 const PAGE_SIZE = 50
 
-const defaultFormData: TransactionFormData = {
+const createFormData = (): TransactionFormData => ({
   type: 'expense',
   amount: '',
   category_id: '',
   date: getCurrentDay(),
   note: ''
-}
+})
 
 interface TransactionsProps {
   transactions: Transaction[]
@@ -32,7 +32,7 @@ export default function Transactions({
 }: TransactionsProps): JSX.Element {
   const { t } = useL()
   const { showToast } = useToast()
-  const [filterMode, setFilterMode] = useState<FilterMode>('monthly')
+  const [filterMode, setFilterMode] = useState<TransactionFilterMode>('monthly')
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingTx, setEditingTx] = useState<Transaction | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
@@ -43,15 +43,17 @@ export default function Transactions({
   const [sortField, setSortField] = useState('date')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [page, setPage] = useState(1)
-  const [formValues, setFormValues] = useState<TransactionFormData>(defaultFormData)
+  const [formValues, setFormValues] = useState<TransactionFormData>(createFormData)
   const [isFormDirty, setIsFormDirty] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     const handler = (e: KeyboardEvent): void => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
         e.preventDefault()
+        if (document.querySelector('[role="dialog"]')) return
         setEditingTx(null)
-        setFormValues(defaultFormData)
+        setFormValues(createFormData())
         setIsFormDirty(false)
         setShowAddModal(true)
       }
@@ -61,7 +63,7 @@ export default function Transactions({
   }, [])
 
   const filteredTxs = useMemo(() => {
-    let result = filterByMode(transactions, filterMode)
+    let result = filterTransactionDates(transactions, filterMode, filterFrom, filterTo)
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
@@ -75,13 +77,6 @@ export default function Transactions({
 
     if (filterCategory !== '') {
       result = result.filter((tx) => tx.category_id === filterCategory)
-    }
-
-    if (filterFrom) {
-      result = result.filter((tx) => tx.date >= filterFrom)
-    }
-    if (filterTo) {
-      result = result.filter((tx) => tx.date <= filterTo)
     }
 
     result.sort((a, b) => {
@@ -108,7 +103,8 @@ export default function Transactions({
   ])
 
   const totalPages = Math.ceil(filteredTxs.length / PAGE_SIZE)
-  const startIdx = (page - 1) * PAGE_SIZE
+  const visiblePage = Math.min(page, Math.max(1, totalPages))
+  const startIdx = (visiblePage - 1) * PAGE_SIZE
   const paginatedTxs = filteredTxs.slice(startIdx, startIdx + PAGE_SIZE)
 
   const handleSort = (field: string): void => {
@@ -131,7 +127,7 @@ export default function Transactions({
     })
     setShowAddModal(false)
     setEditingTx(null)
-    setFormValues(defaultFormData)
+    setFormValues(createFormData())
     setIsFormDirty(false)
     onRefresh()
     showToast(t('common.saved'), 'success')
@@ -149,7 +145,7 @@ export default function Transactions({
     })
     setShowAddModal(false)
     setEditingTx(null)
-    setFormValues(defaultFormData)
+    setFormValues(createFormData())
     setIsFormDirty(false)
     onRefresh()
     showToast(t('common.saved'), 'success')
@@ -176,14 +172,16 @@ export default function Transactions({
   }
 
   const handleModalCancel = (): void => {
+    if (isSubmitting) return
     if (isFormDirty && !window.confirm(t('transactions.discardChanges'))) return
     setShowAddModal(false)
     setEditingTx(null)
-    setFormValues(defaultFormData)
+    setFormValues(createFormData())
     setIsFormDirty(false)
   }
 
   const handleResetFilters = (): void => {
+    setFilterMode('monthly')
     setSearchQuery('')
     setFilterCategory('')
     setFilterFrom('')
@@ -191,7 +189,13 @@ export default function Transactions({
     setPage(1)
   }
 
-  const hasActiveFilters = !!(searchQuery || filterCategory !== '' || filterFrom || filterTo)
+  const hasActiveFilters = !!(
+    searchQuery ||
+    filterCategory !== '' ||
+    filterFrom ||
+    filterTo ||
+    filterMode !== 'monthly'
+  )
 
   return (
     <div className="space-y-5">
@@ -206,6 +210,8 @@ export default function Transactions({
         </div>
         <button
           onClick={() => {
+            setEditingTx(null)
+            setFormValues(createFormData())
             setIsFormDirty(false)
             setShowAddModal(true)
           }}
@@ -225,6 +231,10 @@ export default function Transactions({
         filterMode={filterMode}
         onFilterModeChange={(val) => {
           setFilterMode(val)
+          if (val !== 'custom') {
+            setFilterFrom('')
+            setFilterTo('')
+          }
           setPage(1)
         }}
         filterCategory={filterCategory}
@@ -234,11 +244,13 @@ export default function Transactions({
         }}
         filterFrom={filterFrom}
         onFilterFromChange={(val) => {
+          setFilterMode('custom')
           setFilterFrom(val)
           setPage(1)
         }}
         filterTo={filterTo}
         onFilterToChange={(val) => {
+          setFilterMode('custom')
           setFilterTo(val)
           setPage(1)
         }}
@@ -256,7 +268,7 @@ export default function Transactions({
         onDelete={handleDelete}
         confirmDeleteId={confirmDeleteId}
         setConfirmDeleteId={setConfirmDeleteId}
-        page={page}
+        page={visiblePage}
         setPage={setPage}
         totalPages={totalPages}
         startIdx={startIdx}
@@ -276,6 +288,7 @@ export default function Transactions({
             onSubmit={editingTx ? handleUpdate : handleSubmit}
             onCancel={handleModalCancel}
             onDirtyChange={setIsFormDirty}
+            onSubmittingChange={setIsSubmitting}
           />
         </Modal>
       )}

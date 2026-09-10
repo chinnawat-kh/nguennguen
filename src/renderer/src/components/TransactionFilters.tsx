@@ -2,13 +2,14 @@ import { type JSX } from 'react'
 import { Search } from 'lucide-react'
 import DateInput from './DateInput'
 import { useL } from '../i18n'
-import { type Category, type FilterMode } from '../types'
+import { type Category, type TransactionFilterMode } from '../types'
+import { isValidISODate } from '../dateUtils'
 
 interface TransactionFiltersProps {
   searchQuery: string
   onSearchChange: (val: string) => void
-  filterMode: FilterMode
-  onFilterModeChange: (val: FilterMode) => void
+  filterMode: TransactionFilterMode
+  onFilterModeChange: (val: TransactionFilterMode) => void
   filterCategory: number | ''
   onFilterCategoryChange: (val: number | '') => void
   filterFrom: string
@@ -53,13 +54,16 @@ export default function TransactionFilters({
         </div>
         <select
           value={filterMode}
-          onChange={(e) => onFilterModeChange(e.target.value as FilterMode)}
+          onChange={(e) => onFilterModeChange(e.target.value as TransactionFilterMode)}
+          aria-label={t('transactions.period')}
           className={`w-full px-3 py-2 sm:w-auto ${inputClass} cursor-pointer`}
         >
           <option value="daily">{t('dashboard.today')}</option>
           <option value="weekly">{t('dashboard.thisWeek')}</option>
           <option value="monthly">{t('dashboard.thisMonth')}</option>
           <option value="yearly">{t('dashboard.thisYear')}</option>
+          <option value="all">{t('dashboard.allTime')}</option>
+          <option value="custom">{t('transactions.customRange')}</option>
         </select>
       </div>
       <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -106,6 +110,14 @@ export default function TransactionFilters({
           </button>
         )}
       </div>
+      {filterMode === 'custom' &&
+        ((filterFrom && !isValidISODate(filterFrom)) ||
+          (filterTo && !isValidISODate(filterTo)) ||
+          (filterFrom && filterTo && filterFrom > filterTo)) && (
+          <p role="alert" className="field-error">
+            {t('transactions.invalidRange')}
+          </p>
+        )}
     </div>
   )
 }

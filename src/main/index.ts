@@ -4,6 +4,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import * as validate from './validation'
+import { exportBackup, importBackup } from './backups'
 import { mergeByKey } from './merge'
 import {
   initDB,
@@ -111,9 +112,11 @@ app.whenReady().then(() => {
   autoUpdater.on('download-progress', (progress) => sendUpdateEvent('progress', progress))
   autoUpdater.on('update-downloaded', (info) => sendUpdateEvent('downloaded', info))
   autoUpdater.on('error', (err) => sendUpdateEvent('error', err.message || 'Unknown error'))
-  autoUpdater.checkForUpdatesAndNotify()
+  if (app.isPackaged) autoUpdater.checkForUpdatesAndNotify()
 
   // IPC handlers
+  ipcMain.handle('backup-export', () => exportBackup())
+  ipcMain.handle('backup-import', () => importBackup())
   ipcMain.handle('get-transactions', (_, value) =>
     getTransactions(value == null ? undefined : validate.month(value))
   )

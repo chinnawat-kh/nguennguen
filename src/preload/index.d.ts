@@ -11,6 +11,8 @@ declare global {
   interface Window {
     electron: ElectronAPI
     api: {
+      exportBackup: () => Promise<string | null>
+      importBackup: () => Promise<string | null>
       windowMinimize: () => Promise<void>
       windowMaximize: () => Promise<void>
       windowClose: () => Promise<void>
